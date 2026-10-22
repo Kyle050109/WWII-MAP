@@ -1,0 +1,1263 @@
+<title>烽火亚太 1937–1945</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&family=Oswald:wght@400;500;600&family=Spectral+SC:wght@600;700&display=swap">
+<style>
+/* Layout: a full-screen strategy map; a command bar along the top (date and game speed in the middle), a briefing column on the left, the order of battle on the right, a dated timeline along the bottom. Deliberately one dark theme, like a war-room console. */
+:root {
+  color-scheme: dark;
+  --ui-0: #141815;
+  --ui-1: #1d221e;
+  --ui-2: #262c27;
+  --ui-3: #323a33;
+  --brass: #c9a75c;
+  --brass-dim: #8a7444;
+  --line: rgba(201, 167, 92, .28);
+  --line-soft: rgba(232, 224, 198, .10);
+  --ink: #ebe4cc;
+  --ink-2: #b9b199;
+  --ink-3: #8a8471;
+  --alert: #e2553c;
+  --ok: #7fb069;
+  --sea: #1c3a45;
+  --sea-2: #142b34;
+  --shadow: 0 2px 4px rgba(0, 0, 0, .45), 0 10px 30px rgba(0, 0, 0, .45);
+  --f-serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --f-sc: "Spectral SC", "Noto Serif SC", Georgia, serif;
+  --f-ui: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-num: "Oswald", "Arial Narrow", "Noto Sans SC", sans-serif;
+}
+html, body { height: 100%; }
+body { background: var(--sea-2); color: var(--ink); font-family: var(--f-ui); font-size: 13px; overflow: hidden; }
+#app { position: relative; height: 100%; overflow: hidden; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+#map.drag { cursor: grabbing; }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+/* --- framed panels --- */
+.frame { background: linear-gradient(180deg, var(--ui-2), var(--ui-1)); border: 1px solid var(--line); box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .05); position: relative; }
+.frame::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--line-soft); pointer-events: none; }
+.plate { font-family: var(--f-sc); letter-spacing: .14em; text-transform: uppercase; font-size: 11px; color: var(--brass); display: flex; align-items: center; gap: 8px; }
+.plate::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+html[lang="zh-CN"] .plate { font-family: var(--f-serif); letter-spacing: .3em; font-size: 12px; }
+
+/* --- top command bar --- */
+#top { position: absolute; left: 0; right: 0; top: 0; z-index: 10; display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 12px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-block: calc(8px + env(safe-area-inset-top, 0px)) 8px; pointer-events: none; }
+#top > * { pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 12px; padding: 6px 14px 6px 8px; justify-self: start; min-width: 0; }
+.seal { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border: 1px solid var(--brass-dim); background: radial-gradient(circle at 50% 40%, #3a2f1c, #1a160e); color: var(--brass); font-family: var(--f-serif); font-weight: 900; font-size: 19px; }
+.brand-t { min-width: 0; }
+.brand h1 { margin: 0; font-family: var(--f-serif); font-weight: 900; font-size: 20px; letter-spacing: .12em; line-height: 1.15; white-space: nowrap; }
+html[lang="en"] .brand h1 { font-family: var(--f-sc); font-size: 19px; letter-spacing: .08em; }
+.brand small { display: block; color: var(--ink-3); font-size: 11px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clock { display: flex; align-items: center; gap: 14px; padding: 6px 14px; }
+.date { text-align: center; min-width: 210px; }
+.date b { display: block; font-family: var(--f-num); font-weight: 500; font-size: 26px; letter-spacing: .04em; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
+html[lang="zh-CN"] .date b { font-family: var(--f-serif); font-weight: 900; font-size: 23px; letter-spacing: .06em; }
+.date span { font-size: 11px; color: var(--ink-3); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.speed { display: flex; align-items: center; gap: 6px; }
+.speed .play { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--brass); background: radial-gradient(circle at 50% 35%, #4a3d22, #241d10); color: var(--brass); cursor: pointer; display: grid; place-items: center; padding: 0; }
+.speed .play:hover { background: radial-gradient(circle at 50% 35%, #5c4b29, #2c2414); }
+.pips { display: flex; gap: 3px; }
+.pips button { width: 13px; height: 22px; padding: 0; border: 1px solid var(--brass-dim); background: var(--ui-0); cursor: pointer; }
+.pips button.on { background: linear-gradient(180deg, #e7c779, #a8853f); border-color: var(--brass); }
+.pips button:hover { border-color: var(--brass); }
+.tools { justify-self: end; display: flex; gap: 6px; align-items: flex-start; }
+.tbtn { height: 34px; min-width: 34px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--ui-3), var(--ui-1)); cursor: pointer; font-size: 12.5px; color: var(--ink); box-shadow: var(--shadow); }
+.tbtn:hover { border-color: var(--brass); }
+.tbtn[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); }
+.seg { display: flex; box-shadow: var(--shadow); }
+.seg .tbtn { box-shadow: none; }
+.seg .tbtn + .tbtn { border-left: 0; }
+.menu-wrap { position: relative; }
+.menu { position: absolute; right: 0; top: 40px; width: 220px; padding: 8px 0; display: grid; z-index: 20; }
+.menu label, .menu button { display: flex; align-items: center; gap: 10px; padding: 7px 14px; cursor: pointer; font-size: 13px; background: none; border: 0; text-align: left; width: 100%; color: var(--ink); }
+.menu label:hover, .menu button:hover { background: rgba(201, 167, 92, .10); }
+.menu input { accent-color: var(--brass); width: 15px; height: 15px; margin: 0; }
+.menu .sep { height: 1px; background: var(--line-soft); margin: 6px 0; }
+
+/* --- briefing (left) --- */
+#brief { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(76px + env(safe-area-inset-top, 0px)); bottom: 104px; width: 330px; z-index: 9; display: flex; flex-direction: column; overflow: hidden; }
+.b-sec { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); display: grid; gap: 7px; }
+.phase-k { font-family: var(--f-num); font-size: 11.5px; letter-spacing: .12em; color: var(--brass); text-transform: uppercase; }
+.phase h2 { margin: 0; font-family: var(--f-serif); font-weight: 900; font-size: 22px; letter-spacing: .06em; text-wrap: balance; }
+html[lang="en"] .phase h2 { font-family: var(--f-sc); font-size: 21px; letter-spacing: .03em; }
+.phase p { margin: 0; font-size: 12.8px; line-height: 1.72; color: var(--ink-2); max-width: 62ch; }
+.bars { display: grid; gap: 6px; }
+.bar-row { display: grid; grid-template-columns: 92px 1fr 42px; gap: 8px; align-items: center; font-size: 12px; }
+.bar-row .tr { height: 9px; background: var(--ui-0); border: 1px solid var(--line-soft); position: relative; overflow: hidden; }
+.bar-row .tr i { position: absolute; left: 0; top: 0; bottom: 0; transition: width .4s ease; }
+.bar-row .v { font-family: var(--f-num); text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.bars small { color: var(--ink-3); font-size: 10.5px; }
+.evlist { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 0 12px; scrollbar-width: thin; scrollbar-color: var(--brass-dim) transparent; }
+.evlist .plate { margin: 0 16px 6px; }
+.evlist ol { list-style: none; margin: 0; padding: 0; }
+.evlist li button { width: 100%; text-align: left; background: none; border: 0; padding: 6px 16px; display: grid; grid-template-columns: 58px 1fr; gap: 8px; align-items: baseline; cursor: pointer; border-left: 3px solid transparent; }
+.evlist li button:hover { background: rgba(201, 167, 92, .07); }
+.evlist .d { font-family: var(--f-num); font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.evlist .t { font-size: 12.8px; line-height: 1.45; }
+.evlist li.future { opacity: .42; }
+.evlist li.cur button { border-left-color: var(--brass); background: rgba(201, 167, 92, .10); }
+.evlist li.cur .t { color: var(--brass); font-weight: 700; }
+.evlist li.major .t::after { content: " ◆"; color: var(--alert); font-size: 9px; vertical-align: 2px; }
+.note { padding: 10px 16px 0; color: var(--ink-3); font-size: 10.8px; line-height: 1.6; border-top: 1px solid var(--line-soft); margin-top: 8px; }
+.b-toggle { display: none; }
+
+/* --- order of battle (right) --- */
+#oob { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: calc(76px + env(safe-area-inset-top, 0px)); width: 236px; z-index: 9; padding: 12px 14px 12px; display: grid; gap: 10px; max-height: calc(100% - 200px); overflow-y: auto; }
+.fac { display: grid; gap: 2px; }
+.fac h4 { margin: 0 0 3px; font-family: var(--f-serif); font-size: 12.5px; font-weight: 600; color: var(--ink-2); letter-spacing: .12em; display: flex; justify-content: space-between; }
+html[lang="en"] .fac h4 { font-family: var(--f-sc); letter-spacing: .06em; }
+.fac h4 em { font-style: normal; font-family: var(--f-num); font-size: 10.5px; letter-spacing: .08em; padding: 0 5px; border: 1px solid; line-height: 16px; }
+.fac h4 em.war { color: var(--alert); border-color: rgba(226, 85, 60, .5); }
+.fac h4 em.peace { color: var(--ink-3); border-color: var(--line-soft); }
+.st { display: flex; align-items: center; gap: 8px; padding: 3px 4px; font-size: 12.3px; cursor: default; border: 1px solid transparent; }
+.st:hover, .st:focus { border-color: var(--line); background: rgba(201, 167, 92, .06); }
+.st.off { opacity: .35; }
+.flag { width: 24px; height: 16px; flex: none; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 0 0 2px rgba(201, 167, 92, .25); display: block; }
+.sw { width: 10px; height: 10px; flex: none; margin-left: auto; box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); }
+.keys { display: grid; gap: 5px; border-top: 1px solid var(--line-soft); padding-top: 9px; font-size: 11.5px; color: var(--ink-2); }
+.keys div { display: flex; align-items: center; gap: 8px; }
+.keys svg { flex: none; }
+
+/* --- news card --- */
+#news { position: absolute; z-index: 30; left: 50%; top: calc(86px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(460px, calc(100% - 32px)); max-height: calc(100% - 210px); display: flex; flex-direction: column; }
+.news-head { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px 8px 16px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(201, 167, 92, .16), transparent); }
+.news-x { width: 30px; height: 30px; border: 1px solid var(--line); background: var(--ui-1); color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
+.news-x:hover { color: var(--ink); border-color: var(--brass); }
+.paper { margin: 14px 16px 0; background: #e9e1c9; color: #231d12; padding: 14px 16px 16px; box-shadow: inset 0 0 40px rgba(120, 90, 40, .25); overflow-y: auto; min-height: 0; }
+.paper .mast { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px double #3b3020; padding-bottom: 6px; margin-bottom: 10px; font-family: var(--f-num); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #5a4b31; gap: 8px; }
+.paper .mast b { font-family: var(--f-serif); font-weight: 900; font-size: 15px; letter-spacing: .2em; color: #231d12; }
+.paper h3 { margin: 0 0 8px; font-family: var(--f-serif); font-weight: 900; font-size: 25px; line-height: 1.25; text-wrap: balance; }
+html[lang="en"] .paper h3 { font-family: var(--f-sc); font-size: 24px; }
+.paper .meta { font-family: var(--f-num); font-size: 11.5px; letter-spacing: .06em; color: #6c5b3c; margin-bottom: 8px; }
+.paper p { margin: 0; font-family: var(--f-serif); font-weight: 600; font-size: 14px; line-height: 1.85; color: #2c2416; }
+html[lang="en"] .paper p { font-family: Georgia, "Noto Serif SC", serif; font-weight: 400; font-size: 14.5px; line-height: 1.65; }
+.news-act { display: flex; gap: 8px; padding: 12px 16px 14px; }
+.news-act button { flex: 1; height: 34px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--ui-3), var(--ui-1)); cursor: pointer; font-size: 12.5px; }
+.news-act button:hover { border-color: var(--brass); color: var(--brass); }
+.news-act button.primary { border-color: var(--brass); color: var(--brass); }
+
+/* --- toasts --- */
+#toasts { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); bottom: 104px; z-index: 25; display: grid; gap: 6px; width: 280px; pointer-events: none; }
+.toast { pointer-events: auto; cursor: pointer; padding: 9px 12px 9px 14px; display: grid; gap: 2px; border-left: 3px solid var(--alert); animation: tin .35s ease; }
+.toast b { font-family: var(--f-serif); font-size: 14px; }
+.toast span { font-family: var(--f-num); font-size: 11px; color: var(--ink-3); letter-spacing: .06em; }
+@keyframes tin { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* --- scale bar --- */
+#scale { position: absolute; left: 360px; bottom: 108px; z-index: 8; font-family: var(--f-num); font-size: 11px; color: var(--ink); text-shadow: 0 1px 2px #000; pointer-events: none; }
+#scale i { display: block; height: 6px; border: 1.5px solid var(--ink); border-top: 0; margin-top: 2px; box-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+
+/* --- tooltip --- */
+#tip { position: absolute; z-index: 40; pointer-events: none; padding: 7px 10px; font-size: 12px; line-height: 1.5; max-width: 260px; transform: translate(14px, 14px); }
+#tip b { display: block; font-family: var(--f-serif); font-size: 13.5px; }
+#tip span { display: block; color: var(--ink-2); }
+#tip .chip { display: inline-block; width: 9px; height: 9px; margin-right: 6px; box-shadow: 0 0 0 1px #000; vertical-align: 0; }
+
+/* --- timeline --- */
+#timeline { position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 14px; align-items: center; border-left: 0; border-right: 0; border-bottom: 0; }
+#timeline::before { display: none; }
+.tl-ctl { display: flex; gap: 6px; flex: none; }
+.tl-ctl button { width: 34px; height: 34px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--ui-3), var(--ui-1)); cursor: pointer; display: grid; place-items: center; padding: 0; color: var(--ink-2); }
+.tl-ctl button:hover { border-color: var(--brass); color: var(--brass); }
+.tl-main { flex: 1; min-width: 0; position: relative; height: 66px; }
+.tl-phases { position: absolute; left: 0; right: 0; top: 0; height: 22px; display: flex; }
+.tl-phases div { height: 100%; border-right: 1px solid var(--line-soft); font-size: 11px; color: var(--ink-3); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.tl-phases div:nth-child(odd) { background: rgba(255, 255, 255, .03); }
+.tl-phases div.cur { color: var(--brass); box-shadow: inset 0 -2px 0 var(--brass); }
+.tl-track { position: absolute; left: 0; right: 0; top: 31px; height: 6px; background: var(--ui-0); border: 1px solid var(--line-soft); }
+.tl-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #6b5630, var(--brass)); }
+.tl-evt { position: absolute; top: 27px; width: 2px; height: 14px; margin-left: -1px; background: var(--ink-3); opacity: .35; pointer-events: none; }
+.tl-evt.major { height: 18px; top: 25px; width: 3px; margin-left: -1.5px; background: var(--alert); opacity: .5; }
+.tl-evt.done { opacity: .95; }
+.tl-thumb { position: absolute; top: 34px; width: 16px; height: 16px; margin: -8px 0 0 -8px; transform: rotate(45deg); background: var(--brass); border: 2px solid var(--ui-0); box-shadow: 0 0 0 1px var(--brass); pointer-events: none; }
+.tl-years { position: absolute; left: 0; right: 0; top: 47px; height: 16px; }
+.tl-years span { position: absolute; transform: translateX(-50%); font-family: var(--f-num); font-size: 11px; color: var(--ink-3); }
+.tl-years span::before { content: ""; position: absolute; left: 50%; top: -6px; width: 1px; height: 5px; background: var(--ink-3); }
+#slider { position: absolute; left: -8px; right: -8px; width: calc(100% + 16px); top: 20px; height: 30px; margin: 0; opacity: 0; cursor: pointer; }
+.tl-hover { position: absolute; top: -24px; transform: translateX(-50%); background: var(--ui-0); border: 1px solid var(--line); color: var(--ink); font-family: var(--f-num); font-size: 11px; padding: 2px 7px; white-space: nowrap; pointer-events: none; }
+
+#loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 50; background: var(--sea-2); color: var(--brass); font-family: var(--f-serif); letter-spacing: .3em; font-size: 15px; }
+
+@media (max-width: 1150px) { .brand small { display: none; } #oob { width: 210px; } }
+@media (max-width: 900px) {
+  #top { grid-template-columns: 1fr auto; gap: 8px; }
+  .brand { display: none; }
+  .clock { justify-self: start; padding: 4px 10px; gap: 10px; }
+  .date { min-width: 0; text-align: left; }
+  .date b { font-size: 17px; }
+  html[lang="zh-CN"] .date b { font-size: 16px; }
+  .tools .lbl { display: none; }
+  .pips { display: none; }
+  .speed .play { width: 34px; height: 34px; }
+  .date b { white-space: nowrap; }
+  .date span { white-space: nowrap; }
+  .seg .tbtn[aria-pressed="true"] { display: none; }
+  .tools { gap: 4px; }
+  #brief { left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); width: auto; top: calc(66px + env(safe-area-inset-top, 0px)); bottom: auto; max-height: calc(100% - 190px); }
+  #brief:not(.open) .phase p, #brief:not(.open) .bars-sec, #brief:not(.open) .evlist { display: none; }
+  .phase { grid-template-columns: 1fr auto; align-items: center; }
+  .phase .phase-k { grid-column: 1 / -1; }
+  .phase h2 { font-size: 17px; }
+  .b-toggle { display: inline-flex; height: 28px; padding: 0 10px; align-items: center; border: 1px solid var(--line); background: var(--ui-1); cursor: pointer; font-size: 12px; }
+  .phase p { grid-column: 1 / -1; }
+  #oob { display: none; }
+  #oob.open { display: grid; top: auto; bottom: 100px; right: max(8px, env(safe-area-inset-right, 0px)); max-height: 55%; }
+  #scale { left: 14px; bottom: 98px; }
+  #toasts { width: 230px; bottom: 98px; }
+  .tl-phases div { font-size: 10px; padding: 4px 3px; }
+  .tl-ctl .skip { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .bar-row .tr i { transition: none; } }
+</style>
+
+<div id="app">
+  <canvas id="map" aria-label="Interactive map of the war in Asia and the Pacific"></canvas>
+
+  <header id="top">
+    <div class="brand frame">
+      <div class="seal" aria-hidden="true">烽</div>
+      <div class="brand-t"><h1 data-i="title"></h1><small data-i="subtitle"></small></div>
+    </div>
+    <div class="clock frame">
+      <div class="speed">
+        <button class="play" id="play" aria-label="Play"><svg id="playIco" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11L13.5 8Z" fill="currentColor"/></svg></button>
+        <div class="pips" id="pips" role="group" aria-label="Game speed"></div>
+      </div>
+      <div class="date"><b id="dDate"></b><span id="dDay"></span></div>
+    </div>
+    <div class="tools">
+      <div class="seg"><button class="tbtn" id="lzh" aria-pressed="true">中文</button><button class="tbtn" id="len" aria-pressed="false">EN</button></div>
+      <div class="menu-wrap">
+        <button class="tbtn" id="viewBtn" aria-expanded="false" aria-controls="viewMenu">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2 8h12M8 1.8c2.2 2.4 2.2 10 0 12.4M8 1.8c-2.2 2.4-2.2 10 0 12.4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span class="lbl" data-i="views"></span>
+        </button>
+        <div class="menu frame" id="viewMenu" hidden></div>
+      </div>
+      <div class="menu-wrap">
+        <button class="tbtn" id="layBtn" aria-expanded="false" aria-controls="layMenu">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 15 5 8 8.5 1 5Z M1 8l7 3.5L15 8 M1 11l7 3.5L15 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          <span class="lbl" data-i="layers"></span>
+        </button>
+        <div class="menu frame" id="layMenu" hidden>
+          <label><input type="checkbox" id="ly-front" checked><span data-i="ly_front"></span></label>
+          <label><input type="checkbox" id="ly-arrows" checked><span data-i="ly_arrows"></span></label>
+          <label><input type="checkbox" id="ly-events" checked><span data-i="ly_events"></span></label>
+          <label><input type="checkbox" id="ly-names" checked><span data-i="ly_names"></span></label>
+          <label><input type="checkbox" id="ly-cities" checked><span data-i="ly_cities"></span></label>
+          <label><input type="checkbox" id="ly-grid" checked><span data-i="ly_grid"></span></label>
+          <label><input type="checkbox" id="ly-prov" checked><span data-i="ly_prov"></span></label>
+          <label><input type="checkbox" id="ly-rivers" checked><span data-i="ly_rivers"></span></label>
+          <div class="sep"></div>
+          <label><input type="checkbox" id="ly-toasts" checked><span data-i="ly_toasts"></span></label>
+          <label><input type="checkbox" id="ly-pause"><span data-i="ly_pause"></span></label>
+        </div>
+      </div>
+      <button class="tbtn" id="oobBtn" aria-expanded="false" aria-controls="oob">
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2v12M3 2.5h9l-2 3 2 3H3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside id="brief" class="frame" aria-live="polite">
+    <section class="b-sec phase">
+      <div class="phase-k" id="phaseK"></div>
+      <h2 id="phaseT"></h2>
+      <button class="b-toggle" id="bToggle" aria-expanded="false" data-i="more"></button>
+      <p id="phaseS"></p>
+    </section>
+    <section class="b-sec bars-sec">
+      <div class="plate" data-i="cnhead"></div>
+      <div class="bars" id="bars"></div>
+      <small data-i="cnnote"></small>
+    </section>
+    <section class="evlist">
+      <div class="plate" data-i="evhead"></div>
+      <ol id="evol"></ol>
+      <p class="note" data-i="disclaimer"></p>
+    </section>
+  </aside>
+
+  <aside id="oob" class="frame">
+    <div class="plate" data-i="oobhead"></div>
+    <div id="facs"></div>
+    <div class="keys">
+      <div><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="#000" stroke-width="5" opacity=".6"/><line x1="1" y1="5" x2="25" y2="5" stroke="#ffc94a" stroke-width="2.2"/></svg><span data-i="k_front"></span></div>
+      <div><svg width="26" height="12" aria-hidden="true"><defs><pattern id="kh" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#e6dbb9"/><rect width="1.4" height="4" fill="#8a3a2c"/></pattern></defs><rect x="1" y="1" width="24" height="10" fill="url(#kh)" stroke="#000" stroke-opacity=".5"/></svg><span data-i="k_occ"></span></div>
+      <div><svg width="26" height="12" aria-hidden="true"><path d="M2 6h15" stroke="#b8322a" stroke-width="5" stroke-linecap="round"/><path d="M16 1.5 24 6l-8 4.5Z" fill="#b8322a"/></svg><span data-i="k_arrow"></span></div>
+    </div>
+  </aside>
+
+  <section id="news" class="frame" hidden role="dialog" aria-labelledby="nTitle">
+    <div class="news-head"><span class="plate" id="nType"></span><button class="news-x" id="nClose" aria-label="Close">×</button></div>
+    <div class="paper">
+      <div class="mast"><span id="nPaperL"></span><b data-i="paper"></b><span id="nPaperR"></span></div>
+      <h3 id="nTitle"></h3>
+      <div class="meta" id="nMeta"></div>
+      <p id="nDesc"></p>
+    </div>
+    <div class="news-act"><button id="nPrev"></button><button id="nGo" class="primary"></button><button id="nNext"></button></div>
+  </section>
+
+  <div id="toasts" aria-live="polite"></div>
+  <div id="scale"><span id="scaleT"></span><i id="scaleB"></i></div>
+  <div id="tip" class="frame" hidden></div>
+
+  <footer id="timeline" class="frame">
+    <div class="tl-ctl">
+      <button id="prevEv" class="skip" aria-label="Previous event"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2v10M12 2 5 7l7 5Z" fill="currentColor"/></svg></button>
+      <button id="nextEv" class="skip" aria-label="Next event"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M11 2v10M2 2l7 5-7 5Z" fill="currentColor"/></svg></button>
+    </div>
+    <div class="tl-main" id="tlmain">
+      <div class="tl-phases" id="tlphases"></div>
+      <div class="tl-track"><div class="tl-fill" id="tlfill"></div></div>
+      <div id="tlevts"></div>
+      <div class="tl-thumb" id="tlthumb"></div>
+      <div class="tl-years" id="tlyears"></div>
+      <input type="range" id="slider" min="0" max="100" step="1" value="0" aria-label="Date">
+      <div class="tl-hover" id="tlhover" hidden></div>
+    </div>
+  </footer>
+  <div id="loading">LOADING · 加载中</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>/*__GEO__*/</script>
+<script>/*__CONTROL__*/</script>
+<script>/*__STORY__*/</script>
+<script>
+(function () {
+'use strict';
+const A = window.PA, G = window.PAGEO;
+
+// ============================================================ text
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const T = {
+  zh: {
+    title: '烽火亚太', subtitle: '第二次世界大战 · 亚洲及太平洋战场 1937—1945', views: '视角', layers: '图层', more: '详情', less: '收起',
+    ly_front: '前线', ly_arrows: '攻势箭头', ly_events: '事件标记', ly_names: '国名', ly_cities: '城市', ly_grid: '省份网格', ly_prov: '中国省界', ly_rivers: '河流湖泊',
+    ly_toasts: '播放时弹出大事通知', ly_pause: '遇到大事自动暂停',
+    cnhead: '中国境内控制面积', cnnote: '按地图网格估算的示意比例，非精确统计。', evhead: '本阶段大事', oobhead: '交战各方',
+    k_front: '交战前线', k_occ: '占领区（斜线）', k_arrow: '攻势方向（颜色为进攻方）', paper: '号外',
+    prev: '‹ 上一事件', next: '下一事件 ›', go: '在地图上查看', war: '交战', peace: '未参战',
+    bar: { axis: '日本及傀儡', roc: '国民政府', ccp: '中共根据地', sov: '苏蒙军' },
+    types: { battle: '战役', air: '空战与轰炸', naval: '海战', political: '政治外交', atrocity: '暴行', disaster: '灾难' },
+    disclaimer: '控制区与战线为根据战役地图绘制的示意性近似，在省份网格上按日期切换，不代表精确的测绘边界。敌后游击区、地方实力派等未能一一标出；中国省界采用现代省界近似。',
+    day: (n) => `抗战第 ${n} 天`, after: '战争结束',
+    phaseK: (i, a, b) => `第 ${i} 阶段 · ${a} — ${b}`,
+    full: (d) => `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+    ym: (d) => `${d.getUTCFullYear()}.${d.getUTCMonth() + 1}`,
+    md: (d) => `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+    short: (d) => `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`,
+    occOf: (n) => `${n}占领区`, held: '控制方', zone: '区域'
+  },
+  en: {
+    title: 'Pacific Ablaze', subtitle: 'The Second World War in Asia and the Pacific, 1937–1945', views: 'View', layers: 'Layers', more: 'More', less: 'Less',
+    ly_front: 'Front lines', ly_arrows: 'Offensives', ly_events: 'Events', ly_names: 'Country names', ly_cities: 'Cities', ly_grid: 'Province grid', ly_prov: 'Chinese provinces', ly_rivers: 'Rivers & lakes',
+    ly_toasts: 'Notify major events while playing', ly_pause: 'Pause on major events',
+    cnhead: 'Control of China by area', cnnote: 'Rough shares estimated from the map grid, not precise statistics.', evhead: 'Key events this phase', oobhead: 'Belligerents',
+    k_front: 'Front line', k_occ: 'Occupied territory (hatched)', k_arrow: 'Offensive (attacker\'s colour)', paper: 'EXTRA',
+    prev: '‹ Previous', next: 'Next ›', go: 'Show on map', war: 'AT WAR', peace: 'NOT AT WAR',
+    bar: { axis: 'Japan & puppets', roc: 'Nationalists', ccp: 'Communist areas', sov: 'Soviet forces' },
+    types: { battle: 'Battle', air: 'Air war', naval: 'Naval', political: 'Politics', atrocity: 'Atrocity', disaster: 'Disaster' },
+    disclaimer: 'Areas of control and front lines are schematic approximations drawn from campaign maps and switched by date on a grid of provinces. They are not surveyed borders. Guerrilla zones and regional strongmen are not all shown; Chinese provincial lines follow modern boundaries.',
+    day: (n) => `Day ${n} of the war in China`, after: 'War over',
+    phaseK: (i, a, b) => `Phase ${i} · ${a} — ${b}`,
+    full: (d) => `${d.getUTCDate()} ${MONL[d.getUTCMonth()]} ${d.getUTCFullYear()}`,
+    ym: (d) => `${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`,
+    md: (d) => `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`,
+    short: (d) => `${String(d.getUTCDate()).padStart(2, '0')} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`,
+    occOf: (n) => `${n}-occupied`, held: 'Held by', zone: 'Area'
+  }
+};
+
+// ============================================================ time
+const DAY = 864e5;
+const ds = (s) => { const p = s.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]); };
+const T0 = ds(A.T0), T1 = ds(A.T1);
+const NDAYS = Math.round((T1 - T0) / DAY);
+const toDay = (s) => Math.round((ds(s) - T0) / DAY);
+const toDate = (n) => new Date(T0 + n * DAY);
+
+const st = { day: toDay('1941-12-08'), lang: 'zh', playing: false, speed: 3, focus: null, sel: null, hover: null };
+try { const l = localStorage.getItem('pa-lang'); if (l === 'en' || l === 'zh') st.lang = l; } catch (e) { /* storage unavailable */ }
+const L = () => T[st.lang];
+const nm = (o) => (st.lang === 'zh' ? o.zh : o.en);
+const ni = (arr) => (arr ? arr[st.lang === 'zh' ? 0 : 1] : '');
+
+// ============================================================ projection & geometry (world px)
+const proj = d3.geoMercator().rotate([-137, 0]).scale(1000).translate([0, 0]);
+const P = (ll) => proj(ll);
+function ringPath(path, ring) {
+  for (let i = 0; i < ring.length; i++) { const q = P(ring[i]); if (i) path.lineTo(q[0], q[1]); else path.moveTo(q[0], q[1]); }
+  path.closePath();
+}
+function linePath(path, pts) {
+  for (let i = 0; i < pts.length; i++) { const q = P(pts[i]); if (i) path.lineTo(q[0], q[1]); else path.moveTo(q[0], q[1]); }
+}
+
+const units = {};
+const landPath = new Path2D();
+for (const u in G.units) {
+  const p = new Path2D();
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  let ar = 0;
+  G.units[u].r.forEach(r => {
+    ringPath(p, r);
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = P(r[j]), b = P(r[i]); ar += a[0] * b[1] - b[0] * a[1]; }
+    r.forEach(c => { const q = P(c); if (q[0] < x0) x0 = q[0]; if (q[0] > x1) x1 = q[0]; if (q[1] < y0) y0 = q[1]; if (q[1] > y1) y1 = q[1]; });
+  });
+  landPath.addPath(p);
+  units[u] = { id: u, path: p, bb: [x0, y0, x1, y1], n: G.units[u].n, cells: [], land: Math.abs(ar / 2) };
+}
+// small islands: their cells get a marker so control stays visible when zoomed out
+const smallRings = {};
+for (const u in G.units) {
+  G.units[u].r.forEach(r => {
+    let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const p1 = P(r[j]), p2 = P(r[i]); a += p1[0] * p2[1] - p2[0] * p1[1]; }
+    if (Math.abs(a / 2) < 45) {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; r.forEach(([x, y]) => { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; });
+      (smallRings[u] || (smallRings[u] = [])).push({ r, bb: [x0 - 0.05, y0 - 0.05, x1 + 0.05, y1 + 0.05] });
+    }
+  });
+}
+const borderPath = new Path2D();
+G.borders.forEach(b => linePath(borderPath, b[2]));
+const provPath = new Path2D();
+G.plines.forEach(l => linePath(provPath, l));
+const riverPath = new Path2D(), riverPathMinor = new Path2D();
+G.rivers.forEach(r => linePath(r.r <= 4 ? riverPath : riverPathMinor, r.l));
+const lakePath = new Path2D();
+G.lakes.forEach(r => ringPath(lakePath, r));
+const gratPath = new Path2D();
+for (let lon = 70; lon <= 210; lon += 10) { const pts = []; for (let lat = -50; lat <= 64; lat += 2) pts.push([lon, lat]); linePath(gratPath, pts); }
+for (let lat = -40; lat <= 60; lat += 10) { const pts = []; for (let lon = 64; lon <= 212; lon += 2) pts.push([lon, lat]); linePath(gratPath, pts); }
+const tropic = new Path2D();
+[[23.44], [-23.44], [0]].forEach(([lat]) => { const pts = []; for (let lon = 64; lon <= 212; lon += 2) pts.push([lon, lat]); linePath(tropic, pts); });
+
+// ============================================================ province grid (Voronoi per unit)
+const cells = [];          // {u, x, y, lon, lat, poly, w}
+const eA = [], eB = [], eSeg = [];  // adjacency edges with geometry [x1,y1,x2,y2]
+const adj = [];            // label adjacency pairs [a, b]
+const spacingCN = (x, y) => (x < 98 ? 1.25 : (x < 103 || y > 45) ? 0.8 : 0.5);
+for (const u in units) {
+  const seeds = G.seeds[u] || [];
+  const U = units[u];
+  if (!seeds.length) continue;
+  const pts = seeds.map(P);
+  const [x0, y0, x1, y1] = U.bb;
+  const del = d3.Delaunay.from(pts);
+  const vor = del.voronoi([x0 - 30, y0 - 30, x1 + 30, y1 + 30]);
+  U.del = del; U.vor = vor; U.base = cells.length;
+  U.gridPath = new Path2D(vor.render());
+  const nnd = [];
+  pts.forEach((q, i) => {
+    const poly = vor.cellPolygon(i) || [];
+    let a = 0; for (let k = 0; k < poly.length - 1; k++) a += poly[k][0] * poly[k + 1][1] - poly[k + 1][0] * poly[k][1];
+    const ll = seeds[i];
+    let w;
+    if (u === 'CHN') { const s = spacingCN(ll[0], ll[1]); w = s * s * Math.cos(ll[1] * Math.PI / 180); } else w = Math.abs(a / 2);
+    const islet = (smallRings[u] || []).some(sr => ll[0] >= sr.bb[0] && ll[0] <= sr.bb[2] && ll[1] >= sr.bb[1] && ll[1] <= sr.bb[3]);
+    cells.push({ u, x: q[0], y: q[1], lon: ll[0], lat: ll[1], poly, w, area: Math.abs(a / 2), islet });
+    U.cells.push(cells.length - 1);
+    let best = 1e9; for (const j of del.neighbors(i)) { if (!pts[j]) continue; const d = Math.hypot(pts[j][0] - q[0], pts[j][1] - q[1]); if (d < best) best = d; }
+    nnd.push(best);
+  });
+  const cap = 1.6 * U.land / Math.max(1, pts.length);
+  U.cells.forEach(ci => { cells[ci].wl = Math.min(cells[ci].area, cap); });
+  nnd.sort((a, b) => a - b);
+  const med = nnd.length ? nnd[Math.floor(nnd.length / 2)] : 20;
+  U.med = med;
+  // shared edges between neighbouring cells
+  pts.forEach((q, i) => {
+    const poly = vor.cellPolygon(i); if (!poly) return;
+    const nb = [...del.neighbors(i)].filter(j => pts[j]);
+    for (let k = 0; k < poly.length - 1; k++) {
+      const a = poly[k], b = poly[k + 1], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      const di = Math.hypot(mx - q[0], my - q[1]);
+      let bj = -1, bd = 1e9;
+      for (const j of nb) { const d = Math.abs(Math.hypot(mx - pts[j][0], my - pts[j][1]) - di); if (d < bd) { bd = d; bj = j; } }
+      if (bj > i && bd < 1e-3 * (1 + di)) { eA.push(U.base + i); eB.push(U.base + bj); eSeg.push([a[0], a[1], b[0], b[1]]); }
+    }
+    for (const j of nb) if (j > i && Math.hypot(pts[j][0] - q[0], pts[j][1] - q[1]) < med * 2.7) adj.push([U.base + i, U.base + j]);
+  });
+}
+// border segments between units, with the cell on each side
+G.borders.forEach(([ua, ub, pts]) => {
+  const A1 = units[ua], B1 = units[ub];
+  const pp = pts.map(P);
+  for (let k = 0; k < pp.length - 1; k++) {
+    const mx = (pp[k][0] + pp[k + 1][0]) / 2, my = (pp[k][1] + pp[k + 1][1]) / 2;
+    const ca = A1 && A1.del ? A1.base + A1.del.find(mx, my) : -1 - (A1 ? Object.keys(units).indexOf(ua) : 0);
+    const cb = B1 && B1.del ? B1.base + B1.del.find(mx, my) : -1;
+    if (ca < 0 || cb < 0) continue;
+    eA.push(ca); eB.push(cb); eSeg.push([pp[k][0], pp[k][1], pp[k + 1][0], pp[k + 1][1]]);
+    if (k % 3 === 0) adj.push([ca, cb]);
+  }
+});
+
+// ============================================================ zones → member cells (computed once)
+const ZONES = A.zones;
+const pip = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+A.manchukuoZone.p = G.manchukuo;
+A.sovietManchuria.p = G.manchukuo;
+ZONES.forEach((z, zi) => {
+  z.d0 = toDay(z.from); z.d1 = toDay(z.to); z.i = zi;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  z.p.forEach(([x, y]) => { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; });
+  z.cells = [];
+  z.w.forEach(u => {
+    const U = units[u]; if (!U) return;
+    U.cells.forEach(ci => { const c = cells[ci]; if (c.lon >= x0 && c.lon <= x1 && c.lat >= y0 && c.lat <= y1 && pip(c.lon, c.lat, z.p)) z.cells.push(ci); });
+  });
+});
+const SKEYS = Object.keys(A.status);
+const SIDX = {}; SKEYS.forEach((k, i) => SIDX[k] = i);
+const FAC = {}; A.factions.forEach(f => f.s.forEach(s => FAC[s] = f.k));
+const unitBaseAt = (u, day) => { const b = A.base[u]; if (!b) return 'neu'; let s = b[0][1]; for (const [d, v] of b) if (toDay(d) <= day) s = v; return s; };
+const prewar = {}; for (const u in units) prewar[u] = A.base[u] ? A.base[u][0][1] : 'neu';
+const wars = A.wars.map(w => ({ a: new Set(w[0]), b: new Set(w[1]), d0: toDay(w[2]), d1: toDay(w[3]) }));
+function hostile(s1, s2, day) {
+  if (s1 === s2) return false;
+  for (const w of wars) if (day >= w.d0 && day < w.d1 && ((w.a.has(s1) && w.b.has(s2)) || (w.a.has(s2) && w.b.has(s1)))) return true;
+  return false;
+}
+const atWar = (s, day) => wars.some(w => day >= w.d0 && day < w.d1 && (w.a.has(s) || w.b.has(s)));
+
+// ============================================================ state for a given day (cached)
+const cache = new Map();
+function stateFor(day) {
+  const active = ZONES.filter(z => day >= z.d0 && day < z.d1);
+  const baseKey = Object.keys(units).map(u => unitBaseAt(u, day)).join(',');
+  const warKey = wars.map(w => (day >= w.d0 && day < w.d1 ? 1 : 0)).join('');
+  const key = active.map(z => z.i).join(',') + '|' + baseKey + '|' + warKey;
+  if (cache.has(key)) return cache.get(key);
+  const S = new Array(cells.length), Zi = new Int16Array(cells.length).fill(-1);
+  const ubase = {};
+  for (const u in units) { ubase[u] = unitBaseAt(u, day); units[u].cells.forEach(ci => { S[ci] = ubase[u]; }); }
+  active.forEach(z => z.cells.forEach(ci => { S[ci] = z.s; Zi[ci] = z.i; }));
+  // fills per unit
+  const fills = {};
+  for (const u in units) {
+    const U = units[u];
+    const groups = {}, hatch = new Path2D(); let anyH = false;
+    U.cells.forEach(ci => {
+      const s = S[ci]; const poly = cells[ci].poly; if (!poly.length) return;
+      const g = groups[s] || (groups[s] = new Path2D());
+      g.moveTo(poly[0][0], poly[0][1]); for (let k = 1; k < poly.length; k++) g.lineTo(poly[k][0], poly[k][1]); g.closePath();
+      if (s !== prewar[u] && FAC[s] !== FAC[prewar[u]] && s !== 'ccp' && s !== 'mnk' && s !== 'mjg') {
+        hatch.moveTo(poly[0][0], poly[0][1]); for (let k = 1; k < poly.length; k++) hatch.lineTo(poly[k][0], poly[k][1]); hatch.closePath(); anyH = true;
+      }
+    });
+    const ks = Object.keys(groups);
+    fills[u] = { uniform: ks.length <= 1 ? (ks[0] || ubase[u]) : null, groups, hatch: anyH ? hatch : null };
+  }
+  // control boundaries & fronts
+  const edges = {};   // key: unit id, or '' for borders between units
+  for (let k = 0; k < eA.length; k++) {
+    const a = S[eA[k]], b = S[eB[k]];
+    if (a === b) continue;
+    const ua = cells[eA[k]].u, ub = cells[eB[k]].u, key = ua === ub ? ua : '';
+    const E = edges[key] || (edges[key] = { ctrl: new Path2D(), front: new Path2D() });
+    const g = eSeg[k];
+    const p = hostile(a, b, day) ? E.front : E.ctrl;
+    p.moveTo(g[0], g[1]); p.lineTo(g[2], g[3]);
+  }
+  // clusters for country names
+  const parent = new Int32Array(cells.length); for (let i = 0; i < parent.length; i++) parent[i] = i;
+  const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  adj.forEach(([a, b]) => { if (S[a] === S[b]) { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; } });
+  const cl = new Map();
+  for (let i = 0; i < cells.length; i++) { const r = find(i); let c = cl.get(r); if (!c) cl.set(r, c = { s: S[i], idx: [] }); c.idx.push(i); }
+  const labels = [];
+  cl.forEach(c => { if (c.idx.length >= 2) { const lab = makeLabel(c); if (lab) labels.push(lab); } });
+  const bigW = {}; labels.forEach(l => { const kk = l.name[0] + (l.home ? '' : '*'); bigW[kk] = Math.max(bigW[kk] || 0, l.W); });
+  labels.forEach(l => { l.rel = l.W / bigW[l.name[0] + (l.home ? '' : '*')]; });
+  // China area shares
+  const share = { axis: 0, roc: 0, ccp: 0, sov: 0 }; let tot = 0;
+  units.CHN.cells.forEach(ci => { const s = S[ci], w = cells[ci].w; tot += w; if (s === 'roc') share.roc += w; else if (s === 'ccp') share.ccp += w; else if (s === 'su' || s === 'mpr') share.sov += w; else if (FAC[s] === 'axis') share.axis += w; else share.roc += w; });
+  for (const k in share) share[k] /= tot;
+  const res = { S, Zi, fills, edges, labels, share, ubase };
+  cache.set(key, res);
+  if (cache.size > 60) cache.delete(cache.keys().next().value);
+  return res;
+}
+
+// name for a cluster
+const HOME = { jp: 'JPN', su: 'SUN', mpr: 'MNG', tha: 'THA', fic: 'FIC', nld: 'DEI' };
+const NAMES_BY_STATUS = {
+  roc: ['中华民国', 'REPUBLIC OF CHINA'], ccp: ['中共', 'CCP'], mnk: ['满洲国', 'MANCHUKUO'], mjg: ['蒙疆', 'MENGJIANG'],
+  jp: ['日本', 'JAPAN'], su: ['苏联', 'SOVIET UNION'], mpr: ['蒙古', 'MONGOLIA'], tha: ['泰国', 'SIAM'], usa: ['美国', 'UNITED STATES'],
+  brit: ['英国', 'BRITAIN'], nld: ['荷属东印度', 'NETHERLANDS INDIES'], ffr: ['自由法国', 'FREE FRANCE'], fic: ['法属印度支那', 'FRENCH INDOCHINA']
+};
+function clusterName(c) {
+  const cnt = {}; c.idx.forEach(i => { const u = cells[i].u; cnt[u] = (cnt[u] || 0) + 1; });
+  const u = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+  const s = c.s;
+  c.home = s === prewar[u] || s === 'roc' || s === 'mnk' || s === 'mjg' || s === 'ccp';
+  if (s === 'ccp') return NAMES_BY_STATUS.ccp;
+  if (s === 'roc' || s === 'mnk' || s === 'mjg') return NAMES_BY_STATUS[s];
+  if (s === prewar[u]) {
+    if (s === 'jp' && u === 'JPN') return NAMES_BY_STATUS.jp;
+    const n = units[u].n; return [n[0], n[1].toUpperCase()];
+  }
+  return NAMES_BY_STATUS[s] || [A.status[s].zh, A.status[s].en.toUpperCase()];
+}
+function makeLabel(c) {
+  let W = 0, mx = 0, my = 0;
+  c.idx.forEach(i => { const w = cells[i].wl + 0.01; W += w; mx += cells[i].x * w; my += cells[i].y * w; });
+  mx /= W; my /= W;
+  if (W < 160) return null;
+  let sxx = 0, syy = 0, sxy = 0;
+  c.idx.forEach(i => { const w = cells[i].wl + 0.01, dx = cells[i].x - mx, dy = cells[i].y - my; sxx += w * dx * dx; syy += w * dy * dy; sxy += w * dx * dy; });
+  let ang = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  if (Math.abs(ang) > 0.85) ang = Math.sign(ang) * 0.85;
+  const ca = Math.cos(ang), sa = Math.sin(ang);
+  const us = [], vs = [];
+  c.idx.forEach(i => { const dx = cells[i].x - mx, dy = cells[i].y - my; us.push(dx * ca + dy * sa); vs.push(-dx * sa + dy * ca); });
+  const su = us.slice().sort((a, b) => a - b), sv = vs.slice().sort((a, b) => a - b);
+  const q = (arr, f) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(f * (arr.length - 1))))];
+  const len = q(su, .93) - q(su, .07) + 12, wid = q(sv, .9) - q(sv, .1) + 10;
+  const uc = (q(su, .93) + q(su, .07)) / 2;
+  // quadratic fit v = a u^2 + b u + c (curvature only)
+  let n = us.length, S0 = 0, S1 = 0, S2 = 0, S3 = 0, S4 = 0, V0 = 0, V1 = 0, V2 = 0;
+  for (let i = 0; i < n; i++) { const x = us[i] - uc, y = vs[i]; const x2 = x * x; S0++; S1 += x; S2 += x2; S3 += x2 * x; S4 += x2 * x2; V0 += y; V1 += x * y; V2 += x2 * y; }
+  const det = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const M = [[S4, S3, S2], [S3, S2, S1], [S2, S1, S0]];
+  const D = det(M);
+  let a2 = 0, vc = 0;
+  if (Math.abs(D) > 1e-9) {
+    a2 = det([[V2, S3, S2], [V1, S2, S1], [V0, S1, S0]]) / D;
+    const b2 = det([[S4, V2, S2], [S3, V1, S1], [S2, V0, S0]]) / D;
+    vc = det([[S4, S3, V2], [S3, S2, V1], [S2, S1, V0]]) / D;
+    void b2;
+  }
+  const lim = 0.5 / Math.max(len, 1);
+  a2 = Math.max(-lim, Math.min(lim, a2));
+  const name = clusterName(c);
+  return { s: c.s, cx: mx + ca * uc - sa * vc, cy: my + sa * uc + ca * vc, ang, len, wid, a: a2, name, W, home: c.home };
+}
+
+// ============================================================ canvas
+const cv = document.getElementById('map');
+const ctx = cv.getContext('2d');
+let VW = 0, VH = 0, DPR = 1;
+let view = d3.zoomIdentity;
+const noise = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 160;
+  const g = c.getContext('2d'); const im = g.createImageData(160, 160);
+  for (let i = 0; i < im.data.length; i += 4) { const v = 128 + (Math.random() - .5) * 70; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  g.putImageData(im, 0, 0); return c;
+})();
+const hatchTile = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 8;
+  const g = c.getContext('2d'); g.strokeStyle = 'rgba(70,20,10,0.55)'; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke();
+  return c;
+})();
+let noisePat = null, hatchPat = null;
+
+const ARROW_C = { jp: '#b8322a', roc: '#3d7fe0', ccp: '#e6a23a', usa: '#25b39a', brit: '#e66f9a', su: '#e0662a', mpr: '#c9853a', nld: '#e8902f' };
+function lum(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
+
+function resize() {
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  VW = r.width; VH = r.height;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  noisePat = ctx.createPattern(noise, 'repeat');
+  hatchPat = ctx.createPattern(hatchTile, 'repeat');
+  draw();
+}
+
+let cur = null;
+function draw() {
+  if (!VW) return;
+  const k = view.k;
+  cur = stateFor(st.day);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = ctx.createRadialGradient(VW * .5, VH * .45, 50, VW * .5, VH * .5, Math.max(VW, VH) * .8);
+  g.addColorStop(0, '#244754'); g.addColorStop(1, '#13262e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  ctx.setTransform(DPR * k, 0, 0, DPR * k, DPR * view.x, DPR * view.y);
+  // sea grid
+  ctx.lineWidth = 1 / k; ctx.strokeStyle = 'rgba(190,220,225,0.07)'; ctx.stroke(gratPath);
+  ctx.setLineDash([6 / k, 5 / k]); ctx.strokeStyle = 'rgba(220,200,140,0.14)'; ctx.stroke(tropic); ctx.setLineDash([]);
+  // shallow-water glow
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(120,180,190,0.10)'; ctx.lineWidth = 9 / k; ctx.stroke(landPath);
+  ctx.strokeStyle = 'rgba(150,205,210,0.14)'; ctx.lineWidth = 4 / k; ctx.stroke(landPath);
+  // fills
+  const focus = st.focus;
+  for (const u in units) {
+    const U = units[u], F = cur.fills[u];
+    if (F.uniform) {
+      ctx.fillStyle = A.status[F.uniform].c; ctx.fill(U.path, 'evenodd');
+      if (focus && F.uniform !== focus && FAC[F.uniform] !== focus) { ctx.fillStyle = 'rgba(12,16,14,0.62)'; ctx.fill(U.path, 'evenodd'); }
+      if (F.hatch) { ctx.save(); ctx.clip(U.path, 'evenodd'); hatchPat.setTransform(new DOMMatrix().scale(1 / k)); ctx.fillStyle = hatchPat; ctx.fill(F.hatch); ctx.restore(); }
+    } else {
+      ctx.save(); ctx.clip(U.path, 'evenodd');
+      for (const s in F.groups) {
+        ctx.fillStyle = A.status[s].c; ctx.fill(F.groups[s]);
+        if (focus && s !== focus && FAC[s] !== focus) { ctx.fillStyle = 'rgba(12,16,14,0.62)'; ctx.fill(F.groups[s]); }
+      }
+      if (F.hatch) { hatchPat.setTransform(new DOMMatrix().scale(1 / k)); ctx.fillStyle = hatchPat; ctx.fill(F.hatch); }
+      ctx.restore();
+    }
+  }
+  // paper grain
+  ctx.save(); ctx.globalAlpha = 0.16; ctx.globalCompositeOperation = 'overlay';
+  noisePat.setTransform(new DOMMatrix().scale(1 / k)); ctx.fillStyle = noisePat; ctx.fill(landPath, 'evenodd');
+  ctx.restore();
+  // water
+  if (layer.rivers) {
+    ctx.fillStyle = '#20434f'; ctx.fill(lakePath);
+    ctx.strokeStyle = 'rgba(40,90,110,0.9)'; ctx.lineWidth = 1.3 / k; ctx.stroke(riverPath);
+    if (k > 1.6) { ctx.lineWidth = 0.8 / k; ctx.stroke(riverPathMinor); }
+  }
+  // province grid
+  if (layer.grid && k > 1.25) {
+    ctx.save(); ctx.globalAlpha = Math.min(1, (k - 1.25) / 1.2) * 0.5; ctx.strokeStyle = 'rgba(30,25,15,0.55)'; ctx.lineWidth = 0.6 / k;
+    for (const u in units) { const U = units[u]; if (!U.gridPath) continue; if (!inView(U.bb)) continue; ctx.save(); ctx.clip(U.path, 'evenodd'); ctx.stroke(U.gridPath); ctx.restore(); }
+    ctx.restore();
+  }
+  if (layer.prov && k > 0.75) {
+    ctx.save(); ctx.setLineDash([4 / k, 3 / k]); ctx.strokeStyle = 'rgba(30,24,14,0.5)'; ctx.lineWidth = 1 / k; ctx.stroke(provPath); ctx.restore();
+  }
+  // borders & coasts
+  ctx.strokeStyle = 'rgba(14,12,8,0.75)'; ctx.lineWidth = 0.8 / k; ctx.stroke(landPath);
+  ctx.strokeStyle = 'rgba(14,12,8,0.85)'; ctx.lineWidth = 1.5 / k; ctx.stroke(borderPath);
+  for (const key in cur.edges) {
+    const E = cur.edges[key];
+    ctx.save();
+    if (key) { if (!inView(units[key].bb)) { ctx.restore(); continue; } ctx.clip(units[key].path, 'evenodd'); } else ctx.clip(landPath, 'evenodd');
+    ctx.strokeStyle = 'rgba(14,12,8,0.8)'; ctx.lineWidth = 1.5 / k; ctx.stroke(E.ctrl);
+    if (layer.front) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 5 / k; ctx.lineCap = 'round'; ctx.stroke(E.front);
+      ctx.strokeStyle = '#ffc94a'; ctx.lineWidth = 2.2 / k; ctx.stroke(E.front);
+    }
+    ctx.restore();
+  }
+  // arrows
+  if (layer.arrows) drawArrows(k);
+  // ---- screen space
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (layer.names) drawNames(k);
+  drawSeas(k);
+  if (layer.prov) drawProvLabels(k);
+  drawIslets(k);
+  if (layer.cities) drawCities(k);
+  if (layer.events) drawEvents(k);
+  updateScale();
+}
+const inView = (bb) => { const x0 = bb[0] * view.k + view.x, x1 = bb[2] * view.k + view.x, y0 = bb[1] * view.k + view.y, y1 = bb[3] * view.k + view.y; return x1 > 0 && x0 < VW && y1 > 0 && y0 < VH; };
+const toS = (x, y) => [x * view.k + view.x, y * view.k + view.y];
+
+// ---- names along a curve
+function drawNames(k) {
+  cur.labels.forEach(lb => {
+    const zh = st.lang === 'zh';
+    const txt = zh ? lb.name[0] : lb.name[1];
+    const chars = [...txt];
+    const n = chars.length;
+    const wch = zh ? 1 : 0.66;
+    if (lb.s !== 'ccp' && lb.rel < 0.12 && lb.W < 3000) return;
+    let fw = Math.min(lb.len * 0.82 / (n * wch * (zh ? 1.25 : 1.12)), lb.wid * 0.62);
+    let fs = fw * k;
+    const cap = lb.s === 'ccp' ? 14 : lb.rel < 0.5 ? 26 : (zh ? 58 : 44);
+    if (lb.s === 'ccp') { if (lb.len * k < 34) return; fs = Math.min(14, Math.max(11, fs)); }
+    else if (fs < 10) return;
+    fs = Math.min(fs, cap);
+    fw = fs / k;
+    const alpha = 1;
+    const span = lb.s === 'ccp' ? (n - 1) * fs * 1.15 : Math.min(lb.len * 0.86 * k, n * fs * wch * (zh ? 1.9 : 1.3));
+    const [cx, cy] = toS(lb.cx, lb.cy);
+    if (cx < -400 || cx > VW + 400 || cy < -300 || cy > VH + 300) return;
+    const a = lb.s === 'ccp' ? 0 : lb.a / k, ca = Math.cos(lb.s === 'ccp' ? 0 : lb.ang), sa = Math.sin(lb.s === 'ccp' ? 0 : lb.ang);
+    const dark = lum(A.status[lb.s].c) < 0.45;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha)) * 0.86;
+    ctx.font = `${zh ? 900 : 700} ${fs.toFixed(1)}px ${zh ? '"Noto Serif SC", serif' : '"Spectral SC", Georgia, serif'}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = dark ? 'rgba(245,238,214,0.92)' : 'rgba(34,26,14,0.82)';
+    ctx.strokeStyle = dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,248,225,0.35)'; ctx.lineWidth = Math.max(1, fs / 18);
+    for (let i = 0; i < n; i++) {
+      const u = n === 1 ? 0 : -span / 2 + span * i / (n - 1);
+      const v = a * u * u - a * (span * span) / 12;
+      const x = cx + u * ca - v * sa, y = cy + u * sa + v * ca;
+      const t = (lb.s === 'ccp' ? 0 : lb.ang) + Math.atan(2 * a * u);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.translate(x, y); ctx.rotate(t);
+      ctx.strokeText(chars[i], 0, 0); ctx.fillText(chars[i], 0, 0);
+    }
+    ctx.restore();
+  });
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+function drawSeas(k) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  A.seas.forEach(s => {
+    if ((s.r === 2 && k < 0.45) || (s.r === 3 && k < 1.1) || (s.r === 1 && k > 3)) return;
+    const q = P(s.ll), [x, y] = toS(q[0], q[1]);
+    if (x < -100 || x > VW + 100 || y < -40 || y > VH + 40) return;
+    const fs = s.r === 1 ? 15 : s.r === 2 ? 12 : 11;
+    ctx.font = `italic 600 ${fs}px ${st.lang === 'zh' ? '"Noto Serif SC", serif' : '"Spectral SC", Georgia, serif'}`;
+    ctx.fillStyle = 'rgba(170,205,210,0.55)';
+    const t = nm(s);
+    if (st.lang === 'zh') { const sp = [...t].join(s.r === 1 ? ' ' : ' '); ctx.fillText(sp, x, y); } else { ctx.fillText(t.toUpperCase().split('').join(' '), x, y); }
+  });
+}
+function drawProvLabels(k) {
+  if (k < 1.2) return;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `600 ${Math.min(15, 9 + k * 1.2).toFixed(1)}px ${st.lang === 'zh' ? '"Noto Serif SC", serif' : '"Spectral SC", Georgia, serif'}`;
+  G.plabels.forEach(p => {
+    const q = P([p[2], p[3]]), [x, y] = toS(q[0], q[1]);
+    if (x < -50 || x > VW + 50 || y < -20 || y > VH + 20) return;
+    ctx.fillStyle = 'rgba(30,24,14,0.5)';
+    ctx.fillText(st.lang === 'zh' ? [...p[0]].join(' ') : p[1].toUpperCase(), x, y);
+  });
+}
+const ARCH = new Set(['KIR', 'MHL', 'FSM', 'PLW', 'MNP', 'GUM', 'UMI', 'NRU', 'SLB', 'VUT', 'NCL', 'USA']);
+const keyIslet = (c) => ARCH.has(c.u) || (c.u === 'JPN' && c.lat < 28.6 && c.lon > 129) || (c.u === 'PNG' && (c.lat > -3 || c.lon > 152)) ||
+  (c.u === 'DEI' && ((c.lon > 128 && c.lat > -4) || (Math.abs(c.lon - 117.6) < 0.4 && Math.abs(c.lat - 3.33) < 0.4))) || (c.u === 'IND' && c.lon > 91.5 && c.lat < 14.5);
+const ISLETS = () => cells.map((c, i) => (c.islet && keyIslet(c) ? i : -1)).filter(i => i >= 0);
+let isletIdx = null;
+function drawIslets(k) {
+  if (k > 7) return;
+  if (!isletIdx) isletIdx = ISLETS();
+  const r = k < 1 ? 3.2 : 4.2;
+  isletIdx.forEach(i => {
+    const c = cells[i], [x, y] = toS(c.x, c.y);
+    if (x < -10 || x > VW + 10 || y < -10 || y > VH + 10) return;
+    const s = cur.S[i];
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = A.status[s].c; ctx.fill();
+    ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(10,8,6,0.9)'; ctx.stroke();
+    if (s !== prewar[c.u] && FAC[s] !== FAC[prewar[c.u]]) { ctx.beginPath(); ctx.arc(x, y, r + 2.2, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,201,74,0.85)'; ctx.lineWidth = 1.2; ctx.stroke(); }
+  });
+}
+function drawCities(k) {
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  A.cities.forEach(c => {
+    if (!(c.r === 1 || (c.r === 2 && k >= 0.9) || (c.r === 3 && k >= 1.7) || (c.r === 4 && k >= 3))) return;
+    const q = P(c.ll), [x, y] = toS(q[0], q[1]);
+    if (x < -60 || x > VW + 60 || y < -20 || y > VH + 20) return;
+    if (c.cap) {
+      star(x, y, 6.2, 2.6); ctx.fillStyle = '#f3e3a8'; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#1a140a'; ctx.stroke();
+    } else {
+      ctx.fillStyle = '#1a140a'; ctx.fillRect(x - 3, y - 3, 6, 6); ctx.fillStyle = '#efe6c8'; ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6);
+    }
+    ctx.font = `${c.r <= 1 ? 700 : 500} ${c.r <= 1 ? 13 : 11.5}px "Noto Sans SC", sans-serif`;
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(16,14,10,0.85)'; ctx.lineJoin = 'round';
+    const t = nm(c);
+    ctx.strokeText(t, x + 8, y); ctx.fillStyle = '#f5edd2'; ctx.fillText(t, x + 8, y);
+  });
+}
+function star(x, y, R, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R; ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); }
+  ctx.closePath();
+}
+// ---- events
+const EVP = [];
+const GLY = {
+  battle: () => { ctx.beginPath(); ctx.moveTo(-3.6, -3.6); ctx.lineTo(3.6, 3.6); ctx.moveTo(3.6, -3.6); ctx.lineTo(-3.6, 3.6); ctx.lineWidth = 1.8; ctx.stroke(); },
+  air: () => { ctx.beginPath(); ctx.moveTo(0, -4.6); ctx.lineTo(4, 3.6); ctx.lineTo(0, 1.8); ctx.lineTo(-4, 3.6); ctx.closePath(); ctx.fill(); },
+  naval: () => { ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(0, 3.8); ctx.moveTo(-2.4, -2.2); ctx.lineTo(2.4, -2.2); ctx.moveTo(-3.6, 1); ctx.quadraticCurveTo(0, 6, 3.6, 1); ctx.lineWidth = 1.5; ctx.stroke(); },
+  political: () => { ctx.fillRect(-3.2, -3.2, 6.4, 6.4); },
+  atrocity: () => { ctx.beginPath(); ctx.arc(0, 0, 2.8, 0, Math.PI * 2); ctx.fill(); },
+  disaster: () => { ctx.beginPath(); ctx.moveTo(-4, 1.5); ctx.quadraticCurveTo(-2, -2.5, 0, 1.5); ctx.quadraticCurveTo(2, 5.5, 4, 1.5); ctx.lineWidth = 1.6; ctx.stroke(); }
+};
+function drawEvents(k) {
+  EVP.length = 0;
+  const d = st.day;
+  A.events.forEach(e => {
+    const age = d - e.day;
+    if (age < 0 || (age > 60 && !(st.sel && st.sel.id === e.id))) return;
+    const q = P(e.ll), [x, y] = toS(q[0], q[1]);
+    if (x < -20 || x > VW + 20 || y < -20 || y > VH + 20) return;
+    const fresh = age <= 25, sel = st.sel && st.sel.id === e.id;
+    ctx.save(); ctx.translate(x, y);
+    ctx.globalAlpha = fresh || sel ? 1 : Math.max(0.4, 1 - (age - 25) / 50);
+    if (fresh) { ctx.beginPath(); ctx.arc(0, 0, 11 + (age % 6) * 0.8, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(240,88,58,' + (0.55 - (age % 6) * 0.07) + ')'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = fresh ? '#f0583a' : '#2a2f2b'; ctx.strokeStyle = sel ? '#ffe39a' : '#c9a75c'; ctx.lineWidth = sel ? 2.4 : 1.4;
+    const r = e.major ? 9 : 7.5;
+    ctx.fillRect(-r, -r, r * 2, r * 2); ctx.strokeRect(-r, -r, r * 2, r * 2);
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillStyle = ctx.strokeStyle = fresh ? '#1a0d08' : '#ebe4cc';
+    GLY[e.type]();
+    ctx.restore();
+    EVP.push({ e, x, y, r: r + 4 });
+  });
+}
+// ---- arrows (world coords, widths in screen px)
+const meas = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+const arrowCache = new Map();
+function arrowSamples(a) {
+  if (arrowCache.has(a.id)) return arrowCache.get(a.id);
+  const pts = a.path.map(P);
+  const line = d3.line().curve(d3.curveCatmullRom.alpha(0.5));
+  meas.setAttribute('d', line(pts));
+  const len = meas.getTotalLength(), n = Math.max(8, Math.ceil(len / 2));
+  const sp = []; for (let i = 0; i <= n; i++) { const p = meas.getPointAtLength(len * i / n); sp.push([p.x, p.y]); }
+  const r = { sp, len };
+  arrowCache.set(a.id, r); return r;
+}
+function drawArrows(k) {
+  const d = st.day;
+  A.arrows.forEach(a => {
+    if (!(d >= a.d0 && d <= a.d1 + 20)) return;
+    const { sp } = arrowSamples(a);
+    const prog = a.d1 > a.d0 ? Math.min(1, Math.max(0.08, (d - a.d0) / (a.d1 - a.d0))) : 1;
+    const fade = d > a.d1 ? Math.max(0, 1 - (d - a.d1) / 20) : 1;
+    const m = Math.max(2, Math.round((sp.length - 1) * prog));
+    const s = sp.slice(0, m + 1);
+    const kk = Math.min(2.2, Math.max(0.7, Math.sqrt(k)));
+    const w = 7 * kk / k, hl = 18 * kk / k, hw = 11 * kk / k;
+    const tip = s[s.length - 1];
+    let back = s[0]; for (let i = s.length - 1; i >= 0; i--) if (Math.hypot(tip[0] - s[i][0], tip[1] - s[i][1]) >= hl) { back = s[i]; break; }
+    const ang = Math.atan2(tip[1] - back[1], tip[0] - back[0]);
+    const shaft = s.filter(p => Math.hypot(tip[0] - p[0], tip[1] - p[1]) >= hl * 0.7);
+    const col = ARROW_C[a.side] || '#999';
+    ctx.save(); ctx.globalAlpha = 0.9 * fade; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const sh = new Path2D(); shaft.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1])));
+    const hd = new Path2D();
+    hd.moveTo(tip[0], tip[1]);
+    hd.lineTo(tip[0] - Math.cos(ang) * hl + Math.cos(ang + Math.PI / 2) * hw, tip[1] - Math.sin(ang) * hl + Math.sin(ang + Math.PI / 2) * hw);
+    hd.lineTo(tip[0] - Math.cos(ang) * hl * 0.72, tip[1] - Math.sin(ang) * hl * 0.72);
+    hd.lineTo(tip[0] - Math.cos(ang) * hl - Math.cos(ang + Math.PI / 2) * hw, tip[1] - Math.sin(ang) * hl - Math.sin(ang + Math.PI / 2) * hw);
+    hd.closePath();
+    ctx.strokeStyle = 'rgba(10,8,6,0.85)'; ctx.lineWidth = w + 3 / k; ctx.stroke(sh);
+    ctx.lineWidth = 3 / k; ctx.stroke(hd); ctx.fillStyle = 'rgba(10,8,6,0.85)'; ctx.fill(hd);
+    ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(sh); ctx.fillStyle = col; ctx.fill(hd);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = w * 0.25; ctx.stroke(sh);
+    ctx.restore();
+    const lbl = nm(a);
+    if (lbl && prog > 0.3 && k > 0.6) {
+      const mid = s[Math.floor(s.length * 0.4)], [x, y] = toS(mid[0], mid[1]);
+      ctx.save(); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = fade;
+      ctx.font = '700 11.5px "Noto Sans SC", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(10,8,6,0.9)'; ctx.lineJoin = 'round';
+      ctx.strokeText(lbl, x, y - 9); ctx.fillStyle = col; ctx.fillText(lbl, x, y - 9);
+      ctx.restore();
+      ctx.setTransform(DPR * view.k, 0, 0, DPR * view.k, DPR * view.x, DPR * view.y);
+    }
+  });
+}
+// ---- scale bar
+function updateScale() {
+  const lat = proj.invert([(VW / 2 - view.x) / view.k, (VH / 2 - view.y) / view.k])[1];
+  const mpp = 6371000 / 1000 * Math.cos(lat * Math.PI / 180) / view.k;
+  const target = 110 * mpp;
+  const steps = [1, 2, 5]; let best = 1;
+  for (let e = 0; e < 8; e++) for (const s of steps) { const v = s * Math.pow(10, e); if (v <= target) best = v; }
+  const px = best / mpp;
+  document.getElementById('scaleB').style.width = px.toFixed(1) + 'px';
+  document.getElementById('scaleT').textContent = best >= 1000 ? (best / 1000) + ' km' : best + ' m';
+}
+
+// ============================================================ zoom & hover
+let frameReq = 0;
+const redraw = () => { if (!frameReq) frameReq = requestAnimationFrame(() => { frameReq = 0; draw(); }); };
+const zoom = d3.zoom().scaleExtent([0.22, 140]).on('start', () => cv.classList.add('drag')).on('end', () => cv.classList.remove('drag')).on('zoom', (e) => { view = e.transform; redraw(); });
+const sel = d3.select(cv).call(zoom).on('dblclick.zoom', null);
+function fitView(b, dur) {
+  const p0 = P(b[0]), p1 = P(b[1]);
+  const narrow = VW < 900;
+  const padL = narrow ? 12 : 360, padR = narrow ? 12 : 260, padT = narrow ? 150 : 80, padB = narrow ? 100 : 100;
+  const w = Math.abs(p1[0] - p0[0]), h = Math.abs(p1[1] - p0[1]);
+  const k = Math.min((VW - padL - padR) / w, (VH - padT - padB) / h);
+  const cx = (p0[0] + p1[0]) / 2, cy = (p0[1] + p1[1]) / 2;
+  const t = d3.zoomIdentity.translate(padL + (VW - padL - padR) / 2 - cx * k, padT + (VH - padT - padB) / 2 - cy * k).scale(k);
+  (dur ? sel.transition().duration(dur) : sel).call(zoom.transform, t);
+}
+function flyTo(ll) {
+  const q = P(ll), k = Math.max(view.k, 2.4);
+  const narrow = VW < 900;
+  const cx = narrow ? VW / 2 : 360 + (VW - 360 - 260) / 2, cy = narrow ? VH * 0.62 : VH * 0.58;
+  sel.transition().duration(900).call(zoom.transform, d3.zoomIdentity.translate(cx - q[0] * k, cy - q[1] * k).scale(k));
+}
+const tip = document.getElementById('tip');
+function unitAt(wx, wy) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  for (const u in units) { const b = units[u].bb; if (wx < b[0] || wx > b[2] || wy < b[1] || wy > b[3]) continue; if (ctx.isPointInPath(units[u].path, wx, wy, 'evenodd')) return u; }
+  return null;
+}
+cv.addEventListener('pointermove', (ev) => {
+  if (ev.pointerType === 'touch' || ev.buttons) { tip.hidden = true; return; }
+  const r = cv.getBoundingClientRect(), sx = ev.clientX - r.left, sy = ev.clientY - r.top;
+  const hit = EVP.find(p => Math.hypot(p.x - sx, p.y - sy) <= p.r);
+  if (hit) { cv.style.cursor = 'pointer'; showTip(sx, sy, nm(hit.e), L().full(toDate(hit.e.day)) + ' · ' + L().types[hit.e.type]); return; }
+  cv.style.cursor = '';
+  const wx = (sx - view.x) / view.k, wy = (sy - view.y) / view.k;
+  const u = unitAt(wx, wy);
+  if (!u) { tip.hidden = true; return; }
+  const U = units[u];
+  let s = cur.ubase[u], zname = null;
+  if (U.del) { const ci = U.base + U.del.find(wx, wy); s = cur.S[ci]; const zi = cur.Zi[ci]; if (zi >= 0 && ZONES[zi].n) zname = ni(ZONES[zi].n); }
+  const lines = [`<span><i class="chip" style="background:${A.status[s].c}"></i>${L().held}：${esc(nm(A.status[s]))}</span>`];
+  if (zname) lines.push(`<span>${esc(zname)}</span>`);
+  showTip(sx, sy, ni(U.n), null, lines.join(''));
+});
+cv.addEventListener('pointerleave', () => { tip.hidden = true; });
+cv.addEventListener('click', (ev) => {
+  const r = cv.getBoundingClientRect(), sx = ev.clientX - r.left, sy = ev.clientY - r.top;
+  const hit = EVP.find(p => Math.hypot(p.x - sx, p.y - sy) <= p.r + 4);
+  if (hit) openNews(hit.e, false);
+});
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function showTip(x, y, title, sub, html) {
+  tip.innerHTML = `<b>${esc(title)}</b>` + (sub ? `<span>${esc(sub)}</span>` : '') + (html || '');
+  tip.hidden = false;
+  tip.style.left = Math.min(x, VW - 280) + 'px'; tip.style.top = Math.min(y, VH - 120) + 'px';
+}
+
+// ============================================================ flags (simplified, drawn as SVG)
+const FLAGS = {
+  jp: '<rect width="24" height="16" fill="#f4f1e8"/><circle cx="12" cy="8" r="4.6" fill="#bc1d2b"/>',
+  mnk: '<rect width="24" height="16" fill="#e9c235"/><rect width="9" height="1.6" y="0" fill="#c8102e"/><rect width="9" height="1.6" y="1.6" fill="#1b3f8b"/><rect width="9" height="1.6" y="3.2" fill="#fff"/><rect width="9" height="1.6" y="4.8" fill="#111"/>',
+  mjg: '<rect width="24" height="16" fill="#e2b542"/><rect width="24" height="2.6" y="4.2" fill="#c8102e"/><rect width="24" height="1.2" y="7.4" fill="#fff"/><rect width="24" height="2.6" y="9.2" fill="#2a59a8"/>',
+  tha: '<rect width="24" height="16" fill="#c8102e"/><rect width="24" height="10.6" y="2.7" fill="#fff"/><rect width="24" height="5.3" y="5.35" fill="#22356b"/>',
+  roc: '<rect width="24" height="16" fill="#c8102e"/><rect width="12" height="8" fill="#1d3f94"/><circle cx="6" cy="4" r="1.8" fill="#fff"/><path d="M6 1.2 6.5 2.6 7.9 2.1 7.4 3.5 8.8 4 7.4 4.5 7.9 5.9 6.5 5.4 6 6.8 5.5 5.4 4.1 5.9 4.6 4.5 3.2 4 4.6 3.5 4.1 2.1 5.5 2.6Z" fill="#fff"/><circle cx="6" cy="4" r="1.3" fill="#1d3f94"/><circle cx="6" cy="4" r="1" fill="#fff"/>',
+  ccp: '<rect width="24" height="16" fill="#c8102e"/><path d="M3.2 6.6c1.6 2.2 4.2 2.4 5.6.6M6.9 5.2l-2.6 3.6" stroke="#f6d34a" stroke-width="1.3" fill="none"/><path d="M5.6 2.4 8.4 5.3" stroke="#f6d34a" stroke-width="1.4"/>',
+  usa: '<rect width="24" height="16" fill="#fff"/><g fill="#b22234"><rect width="24" height="1.23" y="0"/><rect width="24" height="1.23" y="2.46"/><rect width="24" height="1.23" y="4.92"/><rect width="24" height="1.23" y="7.38"/><rect width="24" height="1.23" y="9.84"/><rect width="24" height="1.23" y="12.3"/><rect width="24" height="1.23" y="14.77"/></g><rect width="10" height="8.6" fill="#3c3b6e"/>',
+  brit: '<rect width="24" height="16" fill="#1f3a8a"/><path d="M0 0 24 16M24 0 0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0 24 16M24 0 0 16" stroke="#c8102e" stroke-width="1.2"/><path d="M12 0v16M0 8h24" stroke="#fff" stroke-width="5"/><path d="M12 0v16M0 8h24" stroke="#c8102e" stroke-width="3"/>',
+  nld: '<rect width="24" height="16" fill="#fff"/><rect width="24" height="5.33" fill="#ae1c28"/><rect width="24" height="5.33" y="10.67" fill="#21468b"/>',
+  ffr: '<rect width="24" height="16" fill="#fff"/><rect width="8" height="16" fill="#1f3f95"/><rect width="8" height="16" x="16" fill="#e1252e"/><path d="M12 4v8M10 6h4M10.6 9.4h2.8" stroke="#c8102e" stroke-width="1.1"/>',
+  su: '<rect width="24" height="16" fill="#cc1f1f"/><path d="M3.2 6.6c1.6 2.2 4.2 2.4 5.6.6M6.9 5.2l-2.6 3.6" stroke="#f6d34a" stroke-width="1.2" fill="none"/><path d="M6.4 0.8l.5 1.3h1.3l-1.1.8.4 1.3-1.1-.8-1.1.8.4-1.3-1.1-.8h1.3Z" fill="#f6d34a"/>',
+  mpr: '<rect width="24" height="16" fill="#c8102e"/><rect width="8" height="16" x="8" fill="#1f4fa1"/><path d="M4 4.5v7M2.8 5.5h2.4M2.8 10.5h2.4" stroke="#f6d34a" stroke-width="1.1"/><circle cx="4" cy="3.2" r="0.9" fill="#f6d34a"/>',
+  fic: '<rect width="24" height="16" fill="#fff"/><rect width="8" height="16" fill="#1f3f95"/><rect width="8" height="16" x="16" fill="#e1252e"/>',
+  neu: '<rect width="24" height="16" fill="#8f8c80"/><path d="M0 8h24" stroke="#bdb9aa" stroke-width="2"/>'
+};
+const flag = (s) => `<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">${FLAGS[s] || FLAGS.neu}</svg>`;
+
+// ============================================================ panels
+const D0 = A.phases.map(p => ({ ...p, d0: toDay(p.from), d1: toDay(p.to) }));
+A.events.forEach(e => e.day = toDay(e.date));
+A.events.sort((a, b) => a.day - b.day || (a.id < b.id ? -1 : 1));
+A.arrows.forEach(a => { a.d0 = toDay(a.from); a.d1 = toDay(a.to); });
+const phaseOf = (d) => { let p = D0[0]; D0.forEach(x => { if (d >= x.d0) p = x; }); return p; };
+
+function renderFacs() {
+  const host = document.getElementById('facs'); host.innerHTML = '';
+  A.factions.forEach(f => {
+    const box = document.createElement('div'); box.className = 'fac';
+    const h = document.createElement('h4');
+    const war = f.k !== 'other' && f.s.some(s => atWar(s, st.day));
+    h.innerHTML = `<span>${esc(nm(f))}</span>` + (f.k !== 'other' ? `<em class="${war ? 'war' : 'peace'}">${war ? L().war : L().peace}</em>` : '');
+    box.append(h);
+    f.s.forEach(s => {
+      const row = document.createElement('div'); row.className = 'st'; row.tabIndex = 0; row.dataset.s = s;
+      row.innerHTML = flag(s) + `<span>${esc(nm(A.status[s]))}</span><i class="sw" style="background:${A.status[s].c}"></i>`;
+      const on = () => { st.focus = s; markFocus(); redraw(); }, off = () => { st.focus = null; markFocus(); redraw(); };
+      row.addEventListener('pointerenter', on); row.addEventListener('pointerleave', off); row.addEventListener('focus', on); row.addEventListener('blur', off);
+      box.append(row);
+    });
+    host.append(box);
+  });
+}
+function markFocus() { document.querySelectorAll('#facs .st').forEach(r => r.classList.toggle('off', !!st.focus && r.dataset.s !== st.focus)); }
+let lastPhase = null, lastFacKey = '';
+function renderText() {
+  const l = L(), dt = toDate(st.day);
+  document.getElementById('dDate').textContent = l.full(dt);
+  document.getElementById('dDay').textContent = l.day(st.day + 1);
+  const ph = phaseOf(st.day), pi = D0.indexOf(ph);
+  if (ph !== lastPhase || renderText.lang !== st.lang) {
+    lastPhase = ph; renderText.lang = st.lang;
+    document.getElementById('phaseK').textContent = l.phaseK(pi + 1, l.ym(toDate(ph.d0)), l.ym(toDate(ph.d1)));
+    document.getElementById('phaseT').textContent = nm(ph);
+    document.getElementById('phaseS').textContent = st.lang === 'zh' ? ph.szh : ph.sen;
+    const ol = document.getElementById('evol'); ol.innerHTML = '';
+    A.events.filter(e => e.day >= ph.d0 && e.day <= ph.d1).forEach(e => {
+      const li = document.createElement('li'); li.dataset.id = e.id; if (e.major) li.classList.add('major');
+      const b = document.createElement('button');
+      b.innerHTML = `<span class="d">${esc(l.md(toDate(e.day)))}</span><span class="t">${esc(nm(e))}</span>`;
+      b.addEventListener('click', () => openNews(e, true));
+      li.append(b); ol.append(li);
+    });
+    document.querySelectorAll('#tlphases div').forEach((el, i) => el.classList.toggle('cur', i === pi));
+  }
+  let curE = null; A.events.forEach(e => { if (e.day <= st.day && e.day >= ph.d0) curE = e; });
+  document.querySelectorAll('#evol li').forEach(li => {
+    const e = A.events.find(x => x.id === li.dataset.id);
+    li.classList.toggle('future', e.day > st.day);
+    const was = li.classList.contains('cur');
+    li.classList.toggle('cur', !!curE && e.id === curE.id);
+    if (!was && curE && e.id === curE.id && st.playing) li.scrollIntoView({ block: 'nearest' });
+  });
+  // bars
+  const sh = stateFor(st.day).share;
+  const bars = document.getElementById('bars');
+  const rows = [['axis', A.status.jp.c], ['roc', A.status.roc.c], ['ccp', A.status.ccp.c], ['sov', A.status.su.c]];
+  if (!bars.children.length || bars.dataset.lang !== st.lang) {
+    bars.dataset.lang = st.lang; bars.innerHTML = '';
+    rows.forEach(([k, c]) => { const r = document.createElement('div'); r.className = 'bar-row'; r.dataset.k = k; r.innerHTML = `<span>${esc(l.bar[k])}</span><span class="tr"><i style="background:${c}"></i></span><span class="v"></span>`; bars.append(r); });
+  }
+  rows.forEach(([k]) => { const r = bars.querySelector(`[data-k="${k}"]`); const v = sh[k] * 100; r.querySelector('i').style.width = v.toFixed(1) + '%'; r.querySelector('.v').textContent = v.toFixed(1) + '%'; r.hidden = k === 'sov' && v < 0.05; });
+  const fk = A.factions.map(f => f.s.some(s => atWar(s, st.day)) ? 1 : 0).join('') + st.lang;
+  if (fk !== lastFacKey) { lastFacKey = fk; renderFacs(); markFocus(); }
+}
+function renderStatic() {
+  const l = L();
+  document.documentElement.lang = st.lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = st.lang === 'zh' ? '烽火亚太 1937–1945' : 'Pacific Ablaze 1937–1945';
+  document.querySelectorAll('[data-i]').forEach(el => { const v = l[el.dataset.i]; if (typeof v === 'string') el.textContent = v; });
+  document.getElementById('bToggle').textContent = document.getElementById('brief').classList.contains('open') ? l.less : l.more;
+  document.getElementById('lzh').setAttribute('aria-pressed', st.lang === 'zh');
+  document.getElementById('len').setAttribute('aria-pressed', st.lang === 'en');
+  document.getElementById('nPrev').textContent = l.prev; document.getElementById('nNext').textContent = l.next; document.getElementById('nGo').textContent = l.go;
+  const vm = document.getElementById('viewMenu'); vm.innerHTML = '';
+  A.views.forEach(v => { const b = document.createElement('button'); b.textContent = nm(v); b.onclick = () => { vm.hidden = true; fitView(v.b, 800); }; vm.append(b); });
+  const tp = document.getElementById('tlphases'); tp.innerHTML = '';
+  D0.forEach(p => { const el = document.createElement('div'); el.style.width = ((Math.min(p.d1, NDAYS) - p.d0 + 1) / (NDAYS + 1) * 100) + '%'; el.textContent = nm(p); el.title = nm(p); el.onclick = () => setDay(p.d0); tp.append(el); });
+  lastPhase = null; lastFacKey = '';
+  renderText();
+  if (st.sel) fillNews(st.sel);
+  redraw();
+}
+
+// ============================================================ news
+const news = document.getElementById('news');
+function fillNews(e) {
+  const l = L(), dt = toDate(e.day);
+  document.getElementById('nType').textContent = l.types[e.type];
+  document.getElementById('nTitle').textContent = nm(e);
+  document.getElementById('nMeta').textContent = l.full(dt) + ' · ' + `${Math.abs(e.ll[1]).toFixed(2)}°${e.ll[1] >= 0 ? 'N' : 'S'} ${(e.ll[0] > 180 ? 360 - e.ll[0] : e.ll[0]).toFixed(2)}°${e.ll[0] > 180 ? 'W' : 'E'}`;
+  document.getElementById('nDesc').textContent = st.lang === 'zh' ? e.dzh : e.den;
+  document.getElementById('nPaperL').textContent = l.short(dt);
+  document.getElementById('nPaperR').textContent = 'No. ' + String(e.day + 1).padStart(4, '0');
+}
+function openNews(e, fly) {
+  st.sel = e; fillNews(e); news.hidden = false; stop();
+  setDay(e.day);
+  if (fly) flyTo(e.ll);
+}
+function closeNews() { st.sel = null; news.hidden = true; redraw(); }
+function stepEvent(dir) {
+  let idx;
+  if (st.sel) idx = A.events.indexOf(st.sel) + dir;
+  else if (dir > 0) idx = A.events.findIndex(e => e.day > st.day);
+  else { idx = -1; A.events.forEach((e, i) => { if (e.day < st.day) idx = i; }); }
+  if (idx < 0 || idx >= A.events.length) return;
+  openNews(A.events[idx], true);
+}
+document.getElementById('nClose').onclick = closeNews;
+document.getElementById('nPrev').onclick = () => stepEvent(-1);
+document.getElementById('nNext').onclick = () => stepEvent(1);
+document.getElementById('nGo').onclick = () => { if (st.sel) flyTo(st.sel.ll); };
+document.getElementById('prevEv').onclick = () => stepEvent(-1);
+document.getElementById('nextEv').onclick = () => stepEvent(1);
+
+// toasts
+const toasts = document.getElementById('toasts');
+function toast(e) {
+  const t = document.createElement('div'); t.className = 'toast frame';
+  t.innerHTML = `<b>${esc(nm(e))}</b><span>${esc(L().full(toDate(e.day)))}</span>`;
+  t.onclick = () => { openNews(e, true); t.remove(); };
+  toasts.prepend(t);
+  while (toasts.children.length > 3) toasts.lastChild.remove();
+  setTimeout(() => t.remove(), 5200);
+}
+
+// ============================================================ timeline & play
+const slider = document.getElementById('slider'); slider.max = NDAYS;
+function buildTimeline() {
+  const yrs = document.getElementById('tlyears'); yrs.innerHTML = '';
+  for (let y = 1938; y <= 1945; y++) { const s = document.createElement('span'); s.style.left = (toDay(y + '-01-01') / NDAYS * 100) + '%'; s.textContent = y; yrs.append(s); }
+  const ev = document.getElementById('tlevts'); ev.innerHTML = '';
+  A.events.forEach(e => { const t = document.createElement('div'); t.className = 'tl-evt' + (e.major ? ' major' : ''); t.style.left = (e.day / NDAYS * 100) + '%'; t.dataset.d = e.day; ev.append(t); });
+}
+function renderTimeline() {
+  const pct = st.day / NDAYS * 100;
+  document.getElementById('tlfill').style.width = pct + '%';
+  document.getElementById('tlthumb').style.left = pct + '%';
+  slider.value = st.day; slider.setAttribute('aria-valuetext', L().full(toDate(st.day)));
+  document.querySelectorAll('.tl-evt').forEach(t => t.classList.toggle('done', +t.dataset.d <= st.day));
+}
+function setDay(n, fromPlay) {
+  const prev = st.day;
+  st.day = Math.max(0, Math.min(NDAYS, Math.round(n)));
+  if (fromPlay) {
+    const crossed = A.events.filter(e => e.major && e.day > prev && e.day <= st.day);
+    if (crossed.length) {
+      if (document.getElementById('ly-toasts').checked) crossed.forEach(toast);
+      if (document.getElementById('ly-pause').checked) { stop(); openNews(crossed[crossed.length - 1], true); return; }
+    }
+  }
+  renderText(); renderTimeline(); redraw();
+}
+slider.addEventListener('input', () => { stop(); setDay(+slider.value); });
+const tlmain = document.getElementById('tlmain'), hov = document.getElementById('tlhover');
+tlmain.addEventListener('pointermove', (ev) => { const m = tlmain.getBoundingClientRect(); const f = Math.max(0, Math.min(1, (ev.clientX - m.left) / m.width)); hov.hidden = false; hov.style.left = (f * 100) + '%'; hov.textContent = L().short(toDate(Math.round(f * NDAYS))); });
+tlmain.addEventListener('pointerleave', () => { hov.hidden = true; });
+const SPEEDS = [0, 3, 8, 18, 40, 90];
+const pips = document.getElementById('pips');
+for (let i = 1; i <= 5; i++) { const b = document.createElement('button'); b.setAttribute('aria-label', 'Speed ' + i); b.onclick = () => { st.speed = i; markPips(); if (!st.playing) play(); }; pips.append(b); }
+function markPips() { [...pips.children].forEach((b, i) => b.classList.toggle('on', i < st.speed)); }
+let raf = 0, last = 0, acc = 0;
+function play() {
+  if (st.day >= NDAYS) setDay(0);
+  st.playing = true; last = 0; acc = st.day; setPlayIcon();
+  const loop = (ts) => {
+    if (!st.playing) return;
+    const dt = last ? Math.min(0.1, (ts - last) / 1000) : 0; last = ts;
+    acc += dt * SPEEDS[st.speed];
+    if (acc >= NDAYS) { setDay(NDAYS, true); stop(); return; }
+    if (Math.floor(acc) !== st.day) setDay(Math.floor(acc), true);
+    if (st.playing) raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+}
+function stop() { st.playing = false; cancelAnimationFrame(raf); setPlayIcon(); }
+function setPlayIcon() {
+  document.getElementById('playIco').innerHTML = st.playing ? '<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/>' : '<path d="M4 2.5v11L13.5 8Z" fill="currentColor"/>';
+}
+document.getElementById('play').onclick = () => (st.playing ? stop() : play());
+document.addEventListener('keydown', (ev) => {
+  if (ev.target.tagName === 'INPUT' && ev.target.type !== 'range' && ev.target.type !== 'checkbox') return;
+  if (ev.key === ' ' && ev.target.tagName !== 'BUTTON') { ev.preventDefault(); st.playing ? stop() : play(); }
+  else if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+    if (ev.target === slider && !ev.shiftKey) return;
+    ev.preventDefault(); const dir = ev.key === 'ArrowRight' ? 1 : -1;
+    if (ev.shiftKey) { stop(); setDay(st.day + dir * 30); } else stepEvent(dir);
+  } else if (/^[1-5]$/.test(ev.key)) { st.speed = +ev.key; markPips(); }
+  else if (ev.key === 'Escape') { closeNews(); closeMenus(); }
+});
+
+// ============================================================ toolbar
+const layer = { front: true, arrows: true, events: true, names: true, cities: true, grid: true, prov: true, rivers: true };
+['front', 'arrows', 'events', 'names', 'cities', 'grid', 'prov', 'rivers'].forEach(k => document.getElementById('ly-' + k).addEventListener('change', (e) => { layer[k] = e.target.checked; redraw(); }));
+function setLang(l) { st.lang = l; try { localStorage.setItem('pa-lang', l); } catch (e) { /* storage unavailable */ } renderStatic(); renderTimeline(); }
+document.getElementById('lzh').onclick = () => setLang('zh');
+document.getElementById('len').onclick = () => setLang('en');
+function menuBtn(btnId, menuId) {
+  const b = document.getElementById(btnId), m = document.getElementById(menuId);
+  b.onclick = (e) => { e.stopPropagation(); const open = m.hidden; closeMenus(); m.hidden = !open; b.setAttribute('aria-expanded', open); };
+}
+function closeMenus() { ['viewMenu', 'layMenu'].forEach(id => { document.getElementById(id).hidden = true; }); ['viewBtn', 'layBtn'].forEach(id => document.getElementById(id).setAttribute('aria-expanded', 'false')); }
+menuBtn('viewBtn', 'viewMenu'); menuBtn('layBtn', 'layMenu');
+document.addEventListener('click', (e) => { if (!e.target.closest('.menu-wrap')) closeMenus(); });
+document.getElementById('oobBtn').onclick = () => { const o = document.getElementById('oob'); o.classList.toggle('open'); document.getElementById('oobBtn').setAttribute('aria-expanded', o.classList.contains('open')); };
+document.getElementById('bToggle').onclick = () => { const b = document.getElementById('brief'); b.classList.toggle('open'); document.getElementById('bToggle').setAttribute('aria-expanded', b.classList.contains('open')); document.getElementById('bToggle').textContent = b.classList.contains('open') ? L().less : L().more; };
+
+// ============================================================ boot
+let rt = 0;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 120); });
+buildTimeline(); markPips();
+const h = (location.hash || '').slice(1);
+if (/^\d{4}-\d{2}-\d{2}$/.test(h)) st.day = Math.max(0, Math.min(NDAYS, toDay(h)));
+resize();
+fitView(VW < 900 ? [[100, 15], [130, 45]] : A.views[0].b, 0);
+renderStatic(); renderTimeline();
+const ev0 = A.events.find(e => e.id === h); if (ev0) openNews(ev0, true);
+document.getElementById('loading').remove();
+window.__pa = { setDay, fitView, stateFor, cells, units, ZONES, flyTo, draw, cache };
+})();
+</script>

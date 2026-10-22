@@ -4,6 +4,8 @@
 
 An interactive map of the Second World War in Europe, from 1 September 1939 to 8 May 1945. Drag the timeline to watch the fronts move, offensives unfold and key events happen. The interface is available in Chinese and English.
 
+> **New: [Pacific Ablaze](asia/)**, the war in Asia and the Pacific (7 July 1937 – 9 September 1945) in a strategy-game style. See the section below.
+
 ## Features
 
 - **Timeline**: drag it or let it play (0.5× – 4×). The war is divided into 8 phases, from Blitzkrieg to the Fall of the Reich.
@@ -79,3 +81,16 @@ Areas of control and front lines are schematic approximations, drawn by hand as 
 - 1938 borders: [aourednik/historical-basemaps](https://github.com/aourednik/historical-basemaps) (GPL-3.0)
 - Rivers and lakes: [Natural Earth](https://www.naturalearthdata.com/) (public domain)
 - Rendering: [D3.js](https://d3js.org/)
+
+## Pacific Ablaze (Asia and the Pacific)
+
+In the `asia/` folder; open `asia/index.html` in a browser. It runs from the Marco Polo Bridge Incident to the surrender in Nanjing, drawn like a grand-strategy game:
+
+- **Province grid**: about 7,000 provinces recoloured by controller each day. Occupied territory is hatched and front lines are generated along province edges.
+- **Detailed base map**: Natural Earth 1:10m borders and coastlines, merged into 1938 colonial units (British India, French Indochina, the Dutch East Indies and so on). You can zoom down to single islands, with a scale bar.
+- **China in detail**: Japanese occupation stage by stage, Manchukuo (including Jehol), Mengjiang, the Eighth Route Army and New Fourth Army base areas, Ichi-Go, and the Soviet invasion of Manchuria.
+- **Pacific**: the southern advance, island hopping, the Solomons and New Guinea, and Burma. Small islands get coloured markers showing who holds them.
+- **104 events** shown as newspaper "extra" cards, **98 offensive arrows**, curved country names, five game speeds (keys 1–5) and notifications for major events during playback.
+
+After editing `asia/src/`, run `cd asia && python3 scripts/build.py` to rebuild the page; `scripts/prep_asia.py` regenerates `asia/data/asia_geo.json` from the Natural Earth source data.
+
