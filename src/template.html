@@ -1,0 +1,866 @@
+<title>烽火欧陆 1939–1945</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&display=swap">
+<style>
+/* Layout: a full-bleed operations map; a staff-briefing panel docked left, a dated timeline rail along the bottom, map controls floating right. */
+:root {
+  --sea: #b3c2c8;
+  --sea-line: rgba(30, 50, 60, .10);
+  --panel: #eceeea;
+  --panel-2: #e2e5e0;
+  --ink: #1b2227;
+  --muted: #59636a;
+  --rule: rgba(27, 34, 39, .16);
+  --accent: #b8741a;
+  --accent-ink: #fff;
+  --halo: rgba(236, 238, 234, .88);
+  --border: rgba(27, 34, 39, .55);
+  --river: #7f9aa6;
+  --lake: #b3c2c8;
+  --front: #14191d;
+  --front-halo: rgba(255, 255, 255, .7);
+  --shadow: 0 1px 2px rgba(20, 28, 33, .12), 0 8px 24px rgba(20, 28, 33, .14);
+  --s-reich: #3e464f; --s-occ: #8b949c; --s-it: #77763a; --s-minor: #b39f6e; --s-vichy: #b3abc3;
+  --s-al: #3d72a5; --s-su: #ad4237; --s-lib: #5c915d; --s-neu: #d5d2c5;
+  --ar-reich: #20262c; --ar-it: #545318; --ar-al: #1f5487; --ar-su: #8c2219; --ar-lib: #3a6e3b;
+  --f-display: "Big Shoulders Stencil Display", "Noto Serif SC", Impact, sans-serif;
+  --f-head: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --f-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sea: #0f171d; --sea-line: rgba(180, 200, 210, .07); --panel: #171e24; --panel-2: #1e262d;
+    --ink: #dde2dc; --muted: #95a09c; --rule: rgba(221, 226, 220, .14); --accent: #e0a23e; --accent-ink: #1b1306;
+    --halo: rgba(12, 17, 21, .82); --border: rgba(10, 14, 17, .9); --river: #3d5866; --lake: #0f171d;
+    --front: #f1ede3; --front-halo: rgba(0, 0, 0, .55);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px rgba(0, 0, 0, .45);
+    --s-reich: #7b8794; --s-occ: #555f68; --s-it: #95924a; --s-minor: #8a7c55; --s-vichy: #6c6580;
+    --s-al: #4b83ba; --s-su: #c0574c; --s-lib: #6ba56a; --s-neu: #353a38;
+    --ar-reich: #c9d1d8; --ar-it: #d5d27e; --ar-al: #8fbde8; --ar-su: #f08f84; --ar-lib: #9fd59d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sea: #0f171d; --sea-line: rgba(180, 200, 210, .07); --panel: #171e24; --panel-2: #1e262d;
+  --ink: #dde2dc; --muted: #95a09c; --rule: rgba(221, 226, 220, .14); --accent: #e0a23e; --accent-ink: #1b1306;
+  --halo: rgba(12, 17, 21, .82); --border: rgba(10, 14, 17, .9); --river: #3d5866; --lake: #0f171d;
+  --front: #f1ede3; --front-halo: rgba(0, 0, 0, .55);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px rgba(0, 0, 0, .45);
+  --s-reich: #7b8794; --s-occ: #555f68; --s-it: #95924a; --s-minor: #8a7c55; --s-vichy: #6c6580;
+  --s-al: #4b83ba; --s-su: #c0574c; --s-lib: #6ba56a; --s-neu: #353a38;
+  --ar-reich: #c9d1d8; --ar-it: #d5d27e; --ar-al: #8fbde8; --ar-su: #f08f84; --ar-lib: #9fd59d;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--sea); color: var(--ink); font-family: var(--f-body); font-size: 14px; overflow: hidden; }
+#app { position: relative; height: 100%; overflow: hidden; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+#map:active { cursor: grabbing; }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* map layers */
+.sea { fill: var(--sea); }
+.grat { fill: none; stroke: var(--sea-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ctry { stroke: var(--border); stroke-width: .6; vector-effect: non-scaling-stroke; transition: fill .5s ease, opacity .25s; }
+.zone { stroke: none; transition: opacity .25s; }
+.s-reich { fill: var(--s-reich); } .s-occ { fill: url(#hatch); } .s-it { fill: var(--s-it); } .s-minor { fill: var(--s-minor); }
+.s-vichy { fill: var(--s-vichy); } .s-al { fill: var(--s-al); } .s-su { fill: var(--s-su); } .s-lib { fill: var(--s-lib); } .s-neu { fill: var(--s-neu); }
+.dim { opacity: .18; }
+.lake { fill: var(--lake); stroke: var(--river); stroke-width: .5; vector-effect: non-scaling-stroke; }
+.river { fill: none; stroke: var(--river); stroke-width: .8; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.borderline { fill: none; stroke: var(--border); stroke-width: .7; vector-effect: non-scaling-stroke; pointer-events: none; }
+.front-halo { fill: none; stroke: var(--front-halo); stroke-width: 4.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+.front { fill: none; stroke: var(--front); stroke-width: 1.7; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+.ghost { fill: none; stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; opacity: .9; pointer-events: none; }
+.hide-rivers .river, .hide-rivers .lake-n { display: none; }
+.hide-fronts .front, .hide-fronts .front-halo, .hide-fronts .ghost { display: none; }
+.hide-ghost .ghost { display: none; }
+
+.lbl { font-family: var(--f-body); fill: var(--ink); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.lbl-ctry { font-size: 11px; letter-spacing: .18em; font-weight: 500; opacity: .78; text-transform: uppercase; }
+html[lang="en"] .lbl-ctry { font-size: 10px; letter-spacing: .1em; }
+.lbl-sea { font-family: var(--f-head); font-style: italic; font-size: 12px; letter-spacing: .3em; fill: var(--muted); stroke-width: 0; opacity: .85; }
+.lbl-city { font-size: 11px; font-weight: 500; }
+.lbl-city.r1 { font-weight: 700; font-size: 12px; }
+.city-dot { fill: var(--ink); stroke: var(--halo); stroke-width: 1.5; }
+.city-cap { fill: var(--halo); stroke: var(--ink); stroke-width: 1.4; }
+.hide-cities .cities { display: none; }
+.hide-labels .ctry-labels { display: none; }
+
+.arrow-shaft { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.arrow-halo { fill: none; stroke: var(--halo); stroke-linecap: round; stroke-linejoin: round; }
+.arrow-head-halo { stroke: var(--halo); stroke-width: 3; stroke-linejoin: round; }
+.side-reich { stroke: var(--ar-reich); fill: var(--ar-reich); } .side-it { stroke: var(--ar-it); fill: var(--ar-it); }
+.side-al { stroke: var(--ar-al); fill: var(--ar-al); } .side-su { stroke: var(--ar-su); fill: var(--ar-su); } .side-lib { stroke: var(--ar-lib); fill: var(--ar-lib); }
+.arrow-shaft.side-reich, .arrow-shaft.side-it, .arrow-shaft.side-al, .arrow-shaft.side-su, .arrow-shaft.side-lib { fill: none; }
+.arrow-lbl { font-family: var(--f-body); font-size: 11px; font-weight: 700; paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.hide-arrows .arrows { display: none; }
+
+.ev { cursor: pointer; }
+.ev .ring { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: 0; }
+.ev.recent .ring { animation: pulse 2.2s ease-out infinite; }
+.ev .disc { fill: var(--panel); stroke: var(--ink); stroke-width: 1.4; }
+.ev .glyph { fill: var(--ink); stroke: none; }
+.ev .glyph-s { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
+.ev.recent .disc { fill: var(--accent); stroke: var(--ink); }
+.ev.recent .glyph { fill: var(--accent-ink); } .ev.recent .glyph-s { stroke: var(--accent-ink); }
+.ev.old { opacity: .55; }
+.ev.sel .disc { stroke-width: 2.6; }
+.ev:hover .disc { stroke-width: 2.4; }
+.hide-events .events { display: none; }
+@keyframes pulse { 0% { opacity: .9; r: 9; } 100% { opacity: 0; r: 22; } }
+@media (prefers-reduced-motion: reduce) { .ev.recent .ring { animation: none; opacity: .7; } .ctry, .zone { transition: none; } }
+
+/* panel */
+.card { background: var(--panel); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+#panel { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: 16px; bottom: 112px; width: 340px; display: flex; flex-direction: column; border-radius: 4px; overflow: hidden; z-index: 5; }
+.brand { padding: 16px 18px 12px; border-bottom: 1px solid var(--rule); display: grid; gap: 4px; }
+.eyebrow { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.brand h1 { margin: 0; font-family: var(--f-head); font-weight: 900; font-size: 30px; line-height: 1.1; letter-spacing: .04em; text-wrap: balance; }
+html[lang="en"] .brand h1 { font-family: var(--f-display); font-weight: 800; font-size: 34px; letter-spacing: .02em; text-transform: uppercase; }
+.brand p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.now { padding: 12px 18px 14px; border-bottom: 1px solid var(--rule); display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 12px; background: var(--panel-2); }
+.date-big { display: flex; align-items: baseline; gap: 10px; font-family: var(--f-display); line-height: .9; }
+.date-big .yr { font-size: 54px; font-weight: 800; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.date-big .md { white-space: nowrap; font-size: 24px; font-weight: 700; font-family: var(--f-head); letter-spacing: .02em; }
+html[lang="en"] .date-big .md { font-family: var(--f-display); font-size: 26px; text-transform: uppercase; }
+.dayno { font-family: var(--f-mono); font-size: 11px; color: var(--muted); text-align: right; line-height: 1.5; white-space: nowrap; }
+.dayno b { color: var(--ink); font-weight: 500; font-size: 13px; }
+.phase { padding: 14px 18px; border-bottom: 1px solid var(--rule); display: grid; gap: 6px; }
+.phase-k { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
+.phase h2 { margin: 0; font-family: var(--f-head); font-size: 21px; font-weight: 900; letter-spacing: .03em; text-wrap: balance; }
+.phase p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink); max-width: 62ch; }
+.evlist { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 0 12px; }
+.evlist h3 { margin: 0 18px 6px; font-family: var(--f-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.evlist ol { list-style: none; margin: 0; padding: 0; }
+.evlist li button { width: 100%; text-align: left; background: none; border: 0; padding: 7px 18px; display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline; cursor: pointer; border-left: 3px solid transparent; }
+.evlist li button:hover { background: var(--panel-2); }
+.evlist .d { font-family: var(--f-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.evlist .t { font-size: 13px; line-height: 1.45; }
+.evlist li.future .t, .evlist li.future .d { opacity: .45; }
+.evlist li.cur button { border-left-color: var(--accent); background: var(--panel-2); }
+.evlist li.cur .t { font-weight: 700; }
+.mobile-toggle { display: none; }
+
+/* toolbar */
+#tools { position: absolute; top: 16px; right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; z-index: 6; align-items: flex-start; }
+.seg, .btn { display: flex; border-radius: 4px; overflow: hidden; }
+.seg button, .btn { background: var(--panel); border: 1px solid var(--rule); padding: 0 10px; height: 34px; min-width: 34px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; }
+.seg button + button { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.btn:hover, .seg button:hover { background: var(--panel-2); }
+.seg button[aria-pressed="true"]:hover { background: var(--ink); }
+.zoomer { display: flex; flex-direction: column; border-radius: 4px; overflow: hidden; box-shadow: var(--shadow); }
+.zoomer button { background: var(--panel); border: 1px solid var(--rule); width: 34px; height: 34px; cursor: pointer; font-size: 17px; line-height: 1; display: grid; place-items: center; }
+.zoomer button + button { border-top: 0; }
+.tool-group { box-shadow: var(--shadow); border-radius: 4px; }
+#layers { position: absolute; top: 42px; right: 0; width: 210px; padding: 8px 0; border-radius: 4px; display: grid; }
+#layers label { display: flex; align-items: center; gap: 10px; padding: 7px 14px; cursor: pointer; font-size: 13px; }
+#layers label:hover { background: var(--panel-2); }
+#layers input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
+.layers-wrap { position: relative; }
+
+/* legend */
+#legend { padding: 10px 18px 12px; border-bottom: 1px solid var(--rule); display: grid; gap: 8px; }
+.lg-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lg-h b { font-family: var(--f-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lg-asof { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
+.lg-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 8px; }
+.lg-list li { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 1.3; padding: 3px 4px; border-radius: 3px; cursor: default; }
+.lg-list li:hover { background: var(--panel-2); }
+.sw { width: 18px; height: 12px; border-radius: 2px; flex: none; border: 1px solid var(--rule); }
+.lg-list li.off { opacity: .35; }
+.lg-key { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); padding-top: 6px; border-top: 1px solid var(--rule); }
+.lg-key span { display: inline-flex; align-items: center; gap: 6px; }
+.lg-key svg { flex: none; }
+
+/* event card */
+#evcard { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 112px; width: 330px; border-radius: 4px; z-index: 7; display: grid; max-height: calc(100% - 200px); overflow: hidden; }
+#evcard[hidden] { display: none; }
+.ec-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px 8px 16px; border-bottom: 1px solid var(--rule); gap: 8px; }
+.ec-type { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); display: inline-flex; align-items: center; gap: 8px; }
+.ec-close { background: none; border: 0; width: 30px; height: 30px; cursor: pointer; border-radius: 3px; font-size: 18px; color: var(--muted); }
+.ec-close:hover { background: var(--panel-2); color: var(--ink); }
+.ec-body { padding: 12px 16px 14px; display: grid; gap: 8px; overflow-y: auto; }
+.ec-body h3 { margin: 0; font-family: var(--f-head); font-size: 19px; font-weight: 900; line-height: 1.3; text-wrap: balance; }
+.ec-meta { font-family: var(--f-mono); font-size: 11px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.ec-body p { margin: 0; font-size: 13.5px; line-height: 1.75; }
+.ec-nav { display: flex; border-top: 1px solid var(--rule); }
+.ec-nav button { flex: 1; background: none; border: 0; padding: 10px; cursor: pointer; font-size: 12.5px; color: var(--muted); }
+.ec-nav button + button { border-left: 1px solid var(--rule); }
+.ec-nav button:hover { background: var(--panel-2); color: var(--ink); }
+
+/* tooltip */
+#tip { position: absolute; pointer-events: none; z-index: 9; background: var(--ink); color: var(--panel); padding: 6px 9px; border-radius: 3px; font-size: 12px; line-height: 1.45; max-width: 240px; transform: translate(12px, 12px); }
+#tip small { display: block; opacity: .75; font-family: var(--f-mono); font-size: 10.5px; }
+
+/* timeline */
+#timeline { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -6px 20px rgba(0,0,0,.08); display: flex; gap: 16px; align-items: center; }
+.tl-ctl { display: flex; gap: 6px; align-items: center; flex: none; }
+.tl-ctl button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--rule); background: var(--panel-2); cursor: pointer; display: grid; place-items: center; padding: 0; }
+.tl-ctl button:hover { border-color: var(--ink); }
+.tl-ctl #play { width: 44px; height: 44px; background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.tl-ctl #speed { width: auto; border-radius: 18px; padding: 0 10px; font-family: var(--f-mono); font-size: 12px; }
+.tl-ctl svg { display: block; }
+.tl-main { flex: 1; min-width: 0; position: relative; height: 70px; }
+.tl-phases { position: absolute; left: 0; right: 0; top: 0; height: 22px; display: flex; }
+.tl-phases div { height: 100%; border-right: 1px solid var(--rule); font-size: 11px; color: var(--muted); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.tl-phases div:nth-child(odd) { background: var(--panel-2); }
+.tl-phases div.cur { color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--accent); }
+.tl-track { position: absolute; left: 0; right: 0; top: 34px; height: 6px; background: var(--panel-2); border-radius: 3px; border: 1px solid var(--rule); }
+.tl-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); border-radius: 3px; }
+.tl-evt { position: absolute; top: 28px; width: 2px; height: 18px; margin-left: -1px; background: var(--muted); opacity: .45; pointer-events: none; }
+.tl-evt.done { background: var(--accent); opacity: .9; }
+.tl-thumb { position: absolute; top: 37px; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--accent); border: 3px solid var(--panel); box-shadow: 0 0 0 1px var(--ink); pointer-events: none; }
+.tl-years { position: absolute; left: 0; right: 0; top: 50px; height: 18px; }
+.tl-years span { position: absolute; font-family: var(--f-mono); font-size: 11px; color: var(--muted); transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.tl-years span::before { content: ""; position: absolute; left: 50%; top: -8px; width: 1px; height: 6px; background: var(--muted); }
+#slider { position: absolute; left: -9px; right: -9px; width: calc(100% + 18px); top: 22px; height: 30px; margin: 0; opacity: 0; cursor: pointer; }
+.tl-hover { position: absolute; top: -26px; transform: translateX(-50%); background: var(--ink); color: var(--panel); font-family: var(--f-mono); font-size: 11px; padding: 3px 7px; border-radius: 3px; white-space: nowrap; pointer-events: none; }
+.tl-hint { position: absolute; right: 0; top: 50px; font-size: 11px; color: var(--muted); }
+.disclaimer { margin: 10px 18px 0; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+@media (max-width: 1360px) and (min-width: 761px) { #panel { width: 316px; } .phase p { font-size: 12.5px; line-height: 1.65; } }
+@media (max-width: 760px) {
+  #panel { left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); width: auto; top: 10px; bottom: auto; max-height: 60%; }
+  #panel .brand p, #panel .eyebrow { display: none; }
+  .brand { padding: 10px 14px 8px; grid-template-columns: 1fr auto; align-items: center; }
+  .brand h1 { font-size: 20px; }
+  html[lang="en"] .brand h1 { font-size: 22px; }
+  .mobile-toggle { display: inline-flex; background: var(--panel-2); border: 1px solid var(--rule); border-radius: 4px; height: 30px; padding: 0 10px; align-items: center; font-size: 12px; cursor: pointer; }
+  .now { padding: 8px 14px; }
+  .date-big .yr { font-size: 36px; } .date-big .md { font-size: 18px; }
+  .phase { padding: 8px 14px; }
+  .phase h2 { font-size: 16px; }
+  #panel:not(.open) .phase p, #panel:not(.open) .evlist, #panel:not(.open) .phase-k { display: none; }
+  #panel.open .evlist { max-height: 30vh; }
+  #tools { top: auto; bottom: 118px; flex-direction: column-reverse; align-items: flex-end; }
+  #layers { top: auto; bottom: 42px; }
+  #panel:not(.open) #legend { display: none; }
+  #legend { padding: 8px 14px; }
+    #evcard { left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); width: auto; top: auto; bottom: 112px; max-height: 46%; }
+  #timeline { gap: 10px; }
+  .tl-ctl button:not(#play) { width: 32px; height: 32px; }
+  .tl-ctl #speed, .tl-hint, .tl-phases div span.long { display: none; }
+  .tl-phases div { font-size: 10px; padding: 4px 3px; }
+}
+</style>
+
+<div id="app">
+  <svg id="map" role="img" aria-label="二战欧洲战场互动地图"></svg>
+
+  <aside id="panel" class="card" aria-live="polite">
+    <header class="brand">
+      <div>
+        <div class="eyebrow" data-i="eyebrow"></div>
+        <h1 data-i="title"></h1>
+        <p data-i="subtitle"></p>
+      </div>
+      <button class="mobile-toggle" id="panelToggle" aria-expanded="false" data-i="more"></button>
+    </header>
+    <section class="now">
+      <div class="date-big"><span class="yr" id="dYear">1939</span><span class="md" id="dMd"></span></div>
+      <div class="dayno" id="dayno"></div>
+    </section>
+    <section class="phase">
+      <div class="phase-k" id="phaseK"></div>
+      <h2 id="phaseT"></h2>
+      <p id="phaseS"></p>
+    </section>
+    <section id="legend">
+      <div class="lg-h"><b data-i="legend"></b><span class="lg-asof" id="asof"></span></div>
+      <ul class="lg-list" id="lglist"></ul>
+      <div class="lg-key">
+        <span><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="var(--front)" stroke-width="2"/></svg><span data-i="k_front"></span></span>
+        <span><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/></svg><span data-i="k_ghost"></span></span>
+      </div>
+    </section>
+    <section class="evlist">
+      <h3 data-i="evhead"></h3>
+      <ol id="evol"></ol>
+      <p class="disclaimer" data-i="disclaimer"></p>
+    </section>
+  </aside>
+
+  <div id="tools">
+    <div class="seg tool-group" role="group" aria-label="Language">
+      <button id="lzh" aria-pressed="true">中文</button><button id="len" aria-pressed="false">EN</button>
+    </div>
+    <div class="layers-wrap">
+      <button class="btn tool-group" id="layersBtn" aria-expanded="false" aria-controls="layers">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 15 5 8 8.5 1 5Z M1 8l7 3.5L15 8 M1 11l7 3.5L15 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span data-i="layers"></span>
+      </button>
+      <div id="layers" class="card" hidden>
+        <label><input type="checkbox" id="ly-arrows" checked><span data-i="ly_arrows"></span></label>
+        <label><input type="checkbox" id="ly-events" checked><span data-i="ly_events"></span></label>
+        <label><input type="checkbox" id="ly-fronts" checked><span data-i="ly_fronts"></span></label>
+        <label><input type="checkbox" id="ly-ghost" checked><span data-i="ly_ghost"></span></label>
+        <label><input type="checkbox" id="ly-cities" checked><span data-i="ly_cities"></span></label>
+        <label><input type="checkbox" id="ly-labels" checked><span data-i="ly_labels"></span></label>
+        <label><input type="checkbox" id="ly-rivers" checked><span data-i="ly_rivers"></span></label>
+        <label><input type="checkbox" id="ly-allev"><span data-i="ly_allev"></span></label>
+      </div>
+    </div>
+    <div class="zoomer">
+      <button id="zin" aria-label="Zoom in">+</button>
+      <button id="zout" aria-label="Zoom out">−</button>
+      <button id="zreset" aria-label="Reset view"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 5V1.5H5 M9 1.5h3.5V5 M12.5 9v3.5H9 M5 12.5H1.5V9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+    </div>
+  </div>
+
+
+  <div id="evcard" class="card" hidden role="dialog" aria-labelledby="ecTitle">
+    <div class="ec-top"><span class="ec-type" id="ecType"></span><button class="ec-close" id="ecClose" aria-label="Close">×</button></div>
+    <div class="ec-body">
+      <h3 id="ecTitle"></h3>
+      <div class="ec-meta"><span id="ecDate"></span><span id="ecLL"></span></div>
+      <p id="ecDesc"></p>
+    </div>
+    <div class="ec-nav"><button id="ecPrev"></button><button id="ecNext"></button></div>
+  </div>
+
+  <div id="tip" hidden></div>
+
+  <footer id="timeline">
+    <div class="tl-ctl">
+      <button id="prevEv" aria-label="Previous event"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2v10M12 2 5 7l7 5Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+      <button id="play" aria-label="Play"><svg id="playIco" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11L13.5 8Z" fill="currentColor"/></svg></button>
+      <button id="nextEv" aria-label="Next event"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M11 2v10M2 2l7 5-7 5Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
+      <button id="speed" aria-label="Playback speed">1×</button>
+    </div>
+    <div class="tl-main" id="tlmain">
+      <div class="tl-phases" id="tlphases"></div>
+      <div class="tl-track"><div class="tl-fill" id="tlfill"></div></div>
+      <div id="tlevts"></div>
+      <div class="tl-thumb" id="tlthumb"></div>
+      <div class="tl-years" id="tlyears"></div>
+      <input type="range" id="slider" min="0" max="100" step="1" value="0" aria-label="Date">
+      <div class="tl-hover" id="tlhover" hidden></div>
+    </div>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>/*__GEO__*/</script>
+<script>/*__FRONTS__*/</script>
+<script>/*__EVENTS__*/</script>
+<script>
+(function () {
+'use strict';
+const D = window.WW2, G = window.WW2GEO;
+
+// ---------- i18n ----------
+const T = {
+  zh: {
+    eyebrow: '第二次世界大战 · 欧洲战场', title: '烽火欧陆', subtitle: '1939—1945 欧洲战场互动地图：拖动时间轴，看战线推移、攻势展开与重大事件。',
+    more: '详情', less: '收起', evhead: '本阶段大事', layers: '图层', legend: '控制区', asof: '截至 ',
+    ly_arrows: '攻势箭头', ly_events: '事件标记', ly_fronts: '战线', ly_ghost: '上一阶段战线', ly_cities: '城市', ly_labels: '国家与海域名', ly_rivers: '河流湖泊', ly_allev: '显示全部已发生事件',
+    k_front: '当前战线', k_ghost: '上一阶段战线', prev: '‹ 上一事件', next: '下一事件 ›', play: '播放', pause: '暂停',
+    day: (n) => `战争第 <b>${n}</b> 天`, dayEnd: '欧战结束',
+    phaseK: (i, a, b) => `第 ${i} 阶段 · ${a} — ${b}`,
+    types: { battle: '战役', air: '空战与轰炸', naval: '海战', political: '政治', uprising: '起义', atrocity: '暴行与纪念' },
+    disclaimer: '控制区与战线为示意性近似，按时间快照绘制，并非精确测绘边界。国界以1938年为底图。',
+    hint: '空格 播放 · ← → 切换事件 · Shift+← → 跳一个月',
+    md: (d) => `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`, full: (d) => `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+    short: (d) => `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`,
+    ym: (d) => `${d.getUTCFullYear()}.${d.getUTCMonth() + 1}`
+  },
+  en: {
+    eyebrow: 'Second World War · European Theatre', title: 'Europe Ablaze', subtitle: 'An interactive map of the war in Europe, 1939–1945. Drag the timeline to watch fronts move, offensives unfold and key events happen.',
+    more: 'More', less: 'Less', evhead: 'Key events this phase', layers: 'Layers', legend: 'Control', asof: 'as of ',
+    ly_arrows: 'Offensives', ly_events: 'Events', ly_fronts: 'Front lines', ly_ghost: 'Previous front', ly_cities: 'Cities', ly_labels: 'Country & sea names', ly_rivers: 'Rivers & lakes', ly_allev: 'Show all past events',
+    k_front: 'Front line', k_ghost: 'Previous front', prev: '‹ Previous', next: 'Next ›', play: 'Play', pause: 'Pause',
+    day: (n) => `Day <b>${n}</b> of the war`, dayEnd: 'War in Europe over',
+    phaseK: (i, a, b) => `Phase ${i} · ${a} — ${b}`,
+    types: { battle: 'Battle', air: 'Air war', naval: 'Naval', political: 'Politics', uprising: 'Uprising', atrocity: 'Atrocity & memory' },
+    disclaimer: 'Areas of control and front lines are schematic approximations drawn as dated snapshots, not surveyed borders. Base map uses 1938 frontiers.',
+    hint: 'Space play · ← → events · Shift+← → one month',
+    md: (d) => `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`, full: (d) => `${d.getUTCDate()} ${MONTHS_L[d.getUTCMonth()]} ${d.getUTCFullYear()}`,
+    short: (d) => `${String(d.getUTCDate()).padStart(2, '0')} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`,
+    ym: (d) => `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+  }
+};
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_L = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// ---------- time ----------
+const DAY = 864e5;
+const T0 = Date.UTC(1939, 8, 1), T1 = Date.UTC(1945, 4, 8);
+const NDAYS = Math.round((T1 - T0) / DAY);
+const toDay = (s) => { const p = s.split('-').map(Number); return Math.round((Date.UTC(p[0], (p[1] || 1) - 1, p[2] || 1) - T0) / DAY); };
+const toDate = (n) => new Date(T0 + n * DAY);
+const snapDays = D.snaps.map(toDay);
+D.events.forEach(e => e.day = toDay(e.date));
+D.events.sort((a, b) => a.day - b.day);
+D.arrows.forEach(a => { a.d0 = toDay(a.from); a.d1 = toDay(a.to); });
+D.phases.forEach(p => { p.d0 = toDay(p.from); p.d1 = toDay(p.to); });
+
+// ---------- state ----------
+const st = { day: 0, lang: 'zh', snap: -1, playing: false, speed: 1, sel: null, k: 1, t: d3.zoomIdentity, focus: null };
+try { const l = localStorage.getItem('ww2-lang'); if (l === 'en' || l === 'zh') st.lang = l; } catch (e) { /* storage unavailable */ }
+const L = () => T[st.lang];
+const nm = (o) => st.lang === 'zh' ? o.zh : o.en;
+
+// ---------- svg scaffold ----------
+const svg = d3.select('#map');
+const defs = svg.append('defs');
+const pat = defs.append('pattern').attr('id', 'hatch').attr('patternUnits', 'userSpaceOnUse').attr('width', 5).attr('height', 5).attr('patternTransform', 'rotate(45)');
+pat.append('rect').attr('width', 5).attr('height', 5).style('fill', 'var(--s-occ)');
+pat.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 5).style('stroke', 'var(--s-reich)').style('stroke-width', 1.5);
+const root = svg.append('g').attr('class', 'root');
+const gSea = root.append('rect').attr('class', 'sea');
+const gGrat = root.append('path').attr('class', 'grat');
+const gBase = root.append('g');
+const gZones = root.append('g');
+const gBorders = root.append('g');
+const gWater = root.append('g');
+const gGhost = root.append('g');
+const gFront = root.append('g');
+const over = svg.append('g').attr('class', 'over');
+const gLabels = over.append('g').attr('class', 'ctry-labels');
+const gArrows = over.append('g').attr('class', 'arrows');
+const gCities = over.append('g').attr('class', 'cities');
+const gEvents = over.append('g').attr('class', 'events');
+const measure = defs.append('path');
+
+let W = 0, H = 0, proj = null, pathCache = {};
+const P = (ll) => proj(ll);
+const ringD = (r) => 'M' + r.map(p => { const q = P(p); return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join('L') + 'Z';
+const mpD = (mp) => mp.map(poly => poly.map(ringD).join('')).join('');
+const lineD = (pts) => 'M' + pts.map(p => { const q = P(p); return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join('L');
+
+function statusOf(id, day) {
+  const b = D.base[id]; if (!b) return 'neu';
+  let s = b[0][1];
+  for (const [d, v] of b) { if (toDay(d.length === 4 ? d + '-01-01' : d) <= day) s = v; }
+  return s;
+}
+function zonesFor(si) {
+  const n = si + 1, out = [];
+  D.staticZones.forEach(([a, b, z]) => { if (n >= a && n <= b) out.push(z); });
+  (D.fronts[n] || []).forEach(z => out.push(z));
+  return out.slice().sort((a, b) => a.o - b.o);
+}
+function resolveS(s, day) { return s[0] === '@' ? statusOf(s.slice(1), day) : s; }
+
+// ---------- build geography ----------
+function layout() {
+  const r = document.getElementById('app').getBoundingClientRect();
+  W = r.width; H = r.height;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+  const narrow = W < 760;
+  const panelW = narrow ? 0 : document.getElementById('panel').getBoundingClientRect().width + 32;
+  const padL = narrow ? 10 : panelW, padR = narrow ? 10 : 20, padT = narrow ? 150 : 20, padB = narrow ? 130 : 100;
+  proj = d3.geoConicConformal().parallels([38, 62]).rotate([-17, 0]);
+  const fitBox = { type: 'MultiPoint', coordinates: [[-10.5, 36], [44, 36], [46.5, 44], [44, 62], [-10.5, 58], [28, 69.3], [2, 33.2], [20, 31.6], [10, 33.5]] };
+  proj.fitExtent([[padL, padT], [Math.max(padL + 200, W - padR), Math.max(padT + 200, H - padB)]], fitBox);
+  pathCache = {};
+  for (const id in G.countries) pathCache[id] = mpD(G.countries[id].mp);
+  gSea.attr('x', -W * 3).attr('y', -H * 3).attr('width', W * 7).attr('height', H * 7);
+  // graticule
+  let g = '';
+  for (let lon = -30; lon <= 70; lon += 10) { const pts = []; for (let lat = 25; lat <= 80; lat += 1) pts.push([lon, lat]); g += lineD(pts); }
+  for (let lat = 30; lat <= 75; lat += 10) { const pts = []; for (let lon = -30; lon <= 70; lon += 1) pts.push([lon, lat]); g += lineD(pts); }
+  gGrat.attr('d', g);
+  // clip paths
+  defs.selectAll('clipPath').remove();
+  const all = Object.keys(G.countries);
+  defs.append('clipPath').attr('id', 'clip-land').append('path').attr('d', all.map(id => pathCache[id]).join(''));
+  clipIds = {};
+  // base countries
+  gBase.selectAll('path').data(all, d => d).join('path').attr('class', 'ctry').attr('d', d => pathCache[d]).attr('fill-rule', 'evenodd')
+    .on('pointermove', (ev, id) => tipShow(ev, G.countries[id].n[st.lang === 'zh' ? 0 : 1], statusLabel(statusOf(id, snapDays[st.snap])))).on('pointerleave', tipHide);
+  gBorders.selectAll('path').data(all, d => d).join('path').attr('class', 'borderline').attr('d', d => pathCache[d]);
+  // water
+  gWater.selectAll('*').remove();
+  gWater.append('path').attr('class', 'lake lake-n').attr('d', G.lakes.map(l => ringD(l.p)).join(''));
+  gWater.append('path').attr('class', 'river').attr('d', G.rivers.filter(r => r.r <= 8).map(r => r.l.map(lineD).join('')).join(''));
+  st.snap = -1;
+  renderSnap(true);
+  renderOverlay();
+}
+let clipIds = {};
+function clipFor(ids) {
+  const key = ids.slice().sort().join('-');
+  if (!clipIds[key]) {
+    clipIds[key] = 'clip-' + key;
+    defs.append('clipPath').attr('id', clipIds[key]).append('path').attr('d', ids.map(id => pathCache[id] || '').join('')).attr('clip-rule', 'evenodd');
+  }
+  return clipIds[key];
+}
+
+function statusLabel(s) { return nm(D.statuses[s] || D.statuses.neu); }
+
+function snapIndex(day) { let i = 0; for (let k = 0; k < snapDays.length; k++) if (snapDays[k] <= day) i = k; return i; }
+
+function renderSnap(force) {
+  const si = snapIndex(st.day);
+  if (si === st.snap && !force) return;
+  const prev = st.snap; st.snap = si;
+  const sday = snapDays[si];
+  gBase.selectAll('path.ctry').attr('class', id => 'ctry s-' + statusOf(id, sday)).attr('data-s', id => statusOf(id, sday));
+  // zones: crossfade
+  const zs = zonesFor(si);
+  const old = gZones.selectAll('g.zset');
+  old.interrupt().transition().duration(force ? 0 : 450).style('opacity', 0).remove();
+  const ng = gZones.append('g').attr('class', 'zset').style('opacity', force ? 1 : 0);
+  zs.forEach(z => {
+    const s = resolveS(z.s, sday);
+    ng.append('path').attr('class', 'zone s-' + s).attr('data-s', s).attr('d', ringD(z.p)).attr('clip-path', `url(#${clipFor(z.w)})`)
+      .on('pointermove', (ev) => tipShow(ev, z.n ? z.n[st.lang === 'zh' ? 0 : 1] : statusLabel(s), z.n ? statusLabel(s) : ''))
+      .on('pointerleave', tipHide);
+  });
+  if (!force) ng.transition().duration(450).style('opacity', 1);
+  // fronts
+  const fl = zs.filter(z => z.line);
+  gFront.selectAll('*').remove();
+  fl.forEach(z => { gFront.append('path').attr('class', 'front-halo').attr('d', lineD(z.line)).attr('clip-path', `url(#${clipFor(z.w)})`); });
+  fl.forEach(z => { gFront.append('path').attr('class', 'front').attr('d', lineD(z.line)).attr('clip-path', `url(#${clipFor(z.w)})`); });
+  gGhost.selectAll('*').remove();
+  if (si > 0) {
+    const pz = (D.fronts[si] || []).filter(z => z.line);
+    pz.forEach(z => gGhost.append('path').attr('class', 'ghost').attr('d', lineD(z.line)).attr('clip-path', `url(#${clipFor(z.w)})`));
+  }
+  applyFocus();
+  document.getElementById('asof').textContent = L().asof + L().short(toDate(sday));
+}
+
+// ---------- overlay (screen-space) ----------
+const tx = (ll) => st.t.apply(P(ll));
+function renderOverlay() {
+  renderLabels(); renderCities(); renderArrows(); renderEvents();
+}
+function renderLabels() {
+  const k = st.t.k;
+  const data = [];
+  const MINOR = { NLD: 1, BEL: 1, LTU: 1, LVA: 1, EST: 1, DNK: 1, ALB: 1, CHE: 1, CSK: .1, IRL: .1 };
+  for (const id in D.countryLabels) if (!MINOR[id] || k >= 2.2 || (MINOR[id] < 1 && st.lang === 'zh')) data.push({ id, ll: D.countryLabels[id], txt: G.countries[id] ? G.countries[id].n[st.lang === 'zh' ? 0 : 1] : '', k: 'ctry' });
+  D.labels.forEach(l => data.push({ id: l.en, ll: l.ll, txt: nm(l), k: 'sea' }));
+  const show = k < 4.5;
+  gLabels.selectAll('text').data(show ? data : [], d => d.id).join('text')
+    .attr('class', d => 'lbl ' + (d.k === 'sea' ? 'lbl-sea' : 'lbl-ctry')).attr('text-anchor', 'middle')
+    .attr('transform', d => { const p = tx(d.ll); return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`; })
+    .text(d => d.txt);
+}
+function renderCities() {
+  const k = st.t.k;
+  const m = W < 760 ? 1.6 : 1;
+  const vis = D.cities.filter(c => c.r === 1 || (c.r === 2 && k >= 1.3 * m - .3) || (c.r === 3 && k >= 1.7 * m) || (c.r === 4 && k >= 2.8 * m));
+  const sel = gCities.selectAll('g.city').data(vis, d => d.en);
+  const en = sel.enter().append('g').attr('class', 'city');
+  en.append('circle'); en.append('text').attr('class', 'lbl lbl-city').attr('dy', '0.35em');
+  sel.exit().remove();
+  const all = en.merge(sel);
+  all.attr('transform', d => { const p = tx(d.ll); return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`; });
+  all.select('circle').attr('r', d => d.r === 1 ? 3.6 : 2.6).attr('class', d => d.r === 1 ? 'city-cap' : 'city-dot');
+  all.select('text').attr('x', 6).attr('class', d => 'lbl lbl-city' + (d.r === 1 ? ' r1' : '')).text(d => nm(d));
+}
+const lineGen = d3.line().curve(d3.curveCatmullRom.alpha(0.5));
+function renderArrows() {
+  const d = st.day;
+  const vis = D.arrows.filter(a => d >= a.d0 && d <= a.d1 + 25);
+  gArrows.selectAll('*').remove();
+  const k = Math.min(1.6, Math.max(.8, Math.sqrt(st.t.k)));
+  vis.forEach(a => {
+    const pts = a.path.map(tx);
+    measure.attr('d', lineGen(pts));
+    const len = measure.node().getTotalLength();
+    const prog = a.d1 > a.d0 ? Math.min(1, Math.max(.06, (d - a.d0) / (a.d1 - a.d0))) : 1;
+    const fade = d > a.d1 ? Math.max(0, 1 - (d - a.d1) / 25) : 1;
+    const L2 = len * prog, n = Math.max(2, Math.ceil(L2 / 5));
+    const sp = []; for (let i = 0; i <= n; i++) { const q = measure.node().getPointAtLength(L2 * i / n); sp.push([q.x, q.y]); }
+    const w = 5.5 * k, hl = 13 * k, hw = 8 * k;
+    const tip = sp[sp.length - 1];
+    let back = sp[0]; for (let i = sp.length - 1; i >= 0; i--) { if (Math.hypot(tip[0] - sp[i][0], tip[1] - sp[i][1]) >= hl) { back = sp[i]; break; } }
+    const ang = Math.atan2(tip[1] - back[1], tip[0] - back[0]);
+    const shaftEnd = [tip[0] - Math.cos(ang) * hl * .7, tip[1] - Math.sin(ang) * hl * .7];
+    const shaft = sp.filter(p => Math.hypot(tip[0] - p[0], tip[1] - p[1]) >= hl * .7).concat([shaftEnd]);
+    const g = gArrows.append('g').style('opacity', .92 * fade);
+    const sd = 'M' + shaft.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L');
+    g.append('path').attr('class', 'arrow-halo').attr('d', sd).style('stroke-width', w + 3.5);
+    const head = [[tip[0], tip[1]], [tip[0] - Math.cos(ang) * hl + Math.cos(ang + Math.PI / 2) * hw, tip[1] - Math.sin(ang) * hl + Math.sin(ang + Math.PI / 2) * hw], [tip[0] - Math.cos(ang) * hl - Math.cos(ang + Math.PI / 2) * hw, tip[1] - Math.sin(ang) * hl - Math.sin(ang + Math.PI / 2) * hw]];
+    const hd = 'M' + head.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L') + 'Z';
+    g.append('path').attr('class', 'arrow-head-halo').attr('d', hd).style('fill', 'var(--halo)');
+    g.append('path').attr('class', 'arrow-shaft side-' + a.side).attr('d', sd).style('stroke-width', w);
+    g.append('path').attr('class', 'side-' + a.side).attr('d', hd).style('stroke-width', 0);
+    const lbl = nm(a);
+    if (lbl && prog > .25) {
+      const mid = sp[Math.floor(sp.length * .45)];
+      g.append('text').attr('class', 'arrow-lbl side-' + a.side).style('stroke', 'var(--halo)').attr('x', mid[0]).attr('y', mid[1] - 9).attr('text-anchor', 'middle').text(lbl);
+    }
+  });
+}
+const GLYPH = {
+  battle: (g) => { g.append('path').attr('class', 'glyph-s').attr('d', 'M-3.6,-3.6L3.6,3.6M3.6,-3.6L-3.6,3.6'); },
+  air: (g) => { g.append('path').attr('class', 'glyph').attr('d', 'M0,-4.6L4,3.6L0,1.8L-4,3.6Z'); },
+  naval: (g) => { g.append('path').attr('class', 'glyph-s').attr('d', 'M0,-4V3.8M-3.6,1A3.6,3.6 0 0 0 3.6,1M-2.2,-2.4H2.2'); },
+  political: (g) => { g.append('rect').attr('class', 'glyph').attr('x', -3.2).attr('y', -3.2).attr('width', 6.4).attr('height', 6.4); },
+  uprising: (g) => { g.append('path').attr('class', 'glyph').attr('d', 'M0,-4.8L1.2,-1.4L4.6,-1.4L1.9,0.7L2.9,4.2L0,2.1L-2.9,4.2L-1.9,0.7L-4.6,-1.4L-1.2,-1.4Z'); },
+  atrocity: (g) => { g.append('circle').attr('class', 'glyph').attr('r', 2.6); }
+};
+function renderEvents() {
+  const d = st.day, all = document.getElementById('ly-allev').checked;
+  const vis = D.events.filter(e => e.day <= d && (all || d - e.day <= 75 || (st.sel && st.sel.id === e.id)));
+  const sel = gEvents.selectAll('g.ev').data(vis, e => e.id);
+  sel.exit().remove();
+  const en = sel.enter().append('g').attr('class', 'ev').attr('tabindex', 0).attr('role', 'button')
+    .on('click', (ev, e) => { ev.stopPropagation(); openEvent(e, false); })
+    .on('keydown', (ev, e) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openEvent(e, false); } })
+    .on('pointermove', (ev, e) => tipShow(ev, nm(e), L().short(toDate(e.day)))).on('pointerleave', tipHide);
+  en.append('circle').attr('class', 'ring').attr('r', 9);
+  en.append('circle').attr('class', 'disc').attr('r', 8);
+  en.each(function (e) { GLYPH[e.type](d3.select(this)); });
+  const m = en.merge(sel);
+  m.attr('aria-label', e => nm(e)).attr('transform', e => { const p = tx(e.ll); return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`; })
+    .classed('recent', e => d - e.day <= 30).classed('old', e => d - e.day > 30).classed('sel', e => st.sel && st.sel.id === e.id);
+  m.sort((a, b) => a.day - b.day);
+}
+
+// ---------- tooltip ----------
+const tip = document.getElementById('tip');
+function tipShow(ev, a, b) {
+  if (ev.pointerType === 'touch') return;
+  const r = document.getElementById('app').getBoundingClientRect();
+  tip.innerHTML = '';
+  tip.append(document.createTextNode(a));
+  if (b) { const s = document.createElement('small'); s.textContent = b; tip.append(s); }
+  tip.hidden = false;
+  let x = ev.clientX - r.left, y = ev.clientY - r.top;
+  if (x > r.width - 260) x -= 270;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function tipHide() { tip.hidden = true; }
+
+// ---------- panel / text ----------
+function phaseOf(day) { let p = D.phases[0]; D.phases.forEach(ph => { if (day >= ph.d0) p = ph; }); return p; }
+function renderText() {
+  const l = L(), dt = toDate(st.day);
+  document.getElementById('dYear').textContent = dt.getUTCFullYear();
+  document.getElementById('dMd').textContent = l.md(dt);
+  document.getElementById('dayno').innerHTML = st.day >= NDAYS ? l.dayEnd + '<br>' + l.day(st.day + 1) : l.day(st.day + 1);
+  const ph = phaseOf(st.day), pi = D.phases.indexOf(ph);
+  if (renderText.ph !== ph || renderText.lang !== st.lang) {
+    renderText.ph = ph; renderText.lang = st.lang;
+    document.getElementById('phaseK').textContent = l.phaseK(pi + 1, l.ym(toDate(ph.d0)), l.ym(toDate(ph.d1)));
+    document.getElementById('phaseT').textContent = nm(ph);
+    document.getElementById('phaseS').textContent = st.lang === 'zh' ? ph.szh : ph.sen;
+    const ol = document.getElementById('evol'); ol.innerHTML = '';
+    D.events.filter(e => e.day >= ph.d0 && e.day <= ph.d1).forEach(e => {
+      const li = document.createElement('li'); li.dataset.id = e.id;
+      const b = document.createElement('button');
+      const s1 = document.createElement('span'); s1.className = 'd'; s1.textContent = l.short(toDate(e.day)).replace(/^(\d{4})\./, '$1.');
+      const s2 = document.createElement('span'); s2.className = 't'; s2.textContent = nm(e);
+      if (st.lang === 'zh') s1.textContent = `${toDate(e.day).getUTCMonth() + 1}月${toDate(e.day).getUTCDate()}日`;
+      else s1.textContent = `${toDate(e.day).getUTCDate()} ${MONTHS[toDate(e.day).getUTCMonth()]}`;
+      b.append(s1, s2); b.addEventListener('click', () => openEvent(e, true));
+      li.append(b); ol.append(li);
+    });
+    document.querySelectorAll('#tlphases div').forEach((el, i) => el.classList.toggle('cur', i === pi));
+  }
+  let cur = null; D.events.forEach(e => { if (e.day <= st.day && e.day >= ph.d0) cur = e; });
+  document.querySelectorAll('#evol li').forEach(li => {
+    const e = D.events.find(x => x.id === li.dataset.id);
+    li.classList.toggle('future', e.day > st.day);
+    const was = li.classList.contains('cur');
+    li.classList.toggle('cur', cur && e.id === cur.id);
+    if (!was && cur && e.id === cur.id && st.playing) li.scrollIntoView({ block: 'nearest' });
+  });
+}
+function renderStatic() {
+  const l = L();
+  document.documentElement.lang = st.lang === 'zh' ? 'zh-CN' : 'en';
+  if (st.lang === 'en') document.documentElement.setAttribute('lang', 'en');
+  document.querySelectorAll('[data-i]').forEach(el => { const v = l[el.dataset.i]; if (typeof v === 'string') el.textContent = v; });
+  document.getElementById('panelToggle').textContent = document.getElementById('panel').classList.contains('open') ? l.less : l.more;
+  document.getElementById('lzh').setAttribute('aria-pressed', st.lang === 'zh');
+  document.getElementById('len').setAttribute('aria-pressed', st.lang === 'en');
+  document.getElementById('ecPrev').textContent = l.prev; document.getElementById('ecNext').textContent = l.next;
+  svg.attr('aria-label', st.lang === 'zh' ? '二战欧洲战场互动地图' : 'Interactive map of the Second World War in Europe');
+  // legend
+  const ul = document.getElementById('lglist'); ul.innerHTML = '';
+  D.statusOrder.forEach(s => {
+    const li = document.createElement('li'); li.dataset.s = s; li.tabIndex = 0;
+    const sw = document.createElement('span'); sw.className = 'sw';
+    sw.style.background = s === 'occ' ? 'repeating-linear-gradient(45deg, var(--s-occ) 0 3px, var(--s-reich) 3px 4.5px)' : `var(--s-${s})`;
+    li.append(sw, document.createTextNode(statusLabel(s)));
+    const on = () => { st.focus = s; applyFocus(); }, off = () => { st.focus = null; applyFocus(); };
+    li.addEventListener('pointerenter', on); li.addEventListener('pointerleave', off); li.addEventListener('focus', on); li.addEventListener('blur', off);
+    ul.append(li);
+  });
+  // timeline phases
+  const tp = document.getElementById('tlphases'); tp.innerHTML = '';
+  D.phases.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.style.width = ((Math.min(p.d1, NDAYS) - p.d0 + 1) / (NDAYS + 1) * 100) + '%';
+    el.textContent = nm(p); el.title = nm(p);
+    el.addEventListener('click', () => { setDay(p.d0); });
+    tp.append(el);
+  });
+  renderText.ph = null; renderText();
+  document.getElementById('asof').textContent = l.asof + l.short(toDate(snapDays[st.snap]));
+  document.getElementById('play').setAttribute('aria-label', st.playing ? l.pause : l.play);
+  if (st.sel) fillCard(st.sel);
+  renderOverlay();
+}
+function applyFocus() {
+  const f = st.focus;
+  root.selectAll('.ctry, .zone').classed('dim', function () { return f && this.getAttribute('data-s') !== f; });
+  document.querySelectorAll('#lglist li').forEach(li => li.classList.toggle('off', !!f && li.dataset.s !== f));
+}
+
+// ---------- event card ----------
+const card = document.getElementById('evcard');
+function fillCard(e) {
+  const l = L();
+  document.getElementById('ecType').textContent = l.types[e.type];
+  document.getElementById('ecTitle').textContent = nm(e);
+  document.getElementById('ecDate').textContent = l.full(toDate(e.day));
+  const [lo, la] = e.ll;
+  document.getElementById('ecLL').textContent = `${Math.abs(la).toFixed(2)}°${la >= 0 ? 'N' : 'S'} ${Math.abs(lo).toFixed(2)}°${lo >= 0 ? 'E' : 'W'}`;
+  document.getElementById('ecDesc').textContent = st.lang === 'zh' ? e.dzh : e.den;
+}
+function openEvent(e, fly) {
+  st.sel = e; fillCard(e); card.hidden = false;
+  stop();
+  setDay(e.day);
+  if (fly) flyTo(e.ll);
+}
+function closeCard() { st.sel = null; card.hidden = true; renderEvents(); }
+function stepEvent(dir) {
+  let idx;
+  if (st.sel) idx = D.events.indexOf(st.sel) + dir;
+  else if (dir > 0) idx = D.events.findIndex(e => e.day > st.day);
+  else { idx = -1; D.events.forEach((e, i) => { if (e.day < st.day) idx = i; }); }
+  if (idx < 0 || idx >= D.events.length) return;
+  openEvent(D.events[idx], true);
+}
+
+// ---------- zoom ----------
+const zoom = d3.zoom().scaleExtent([1, 9]).on('zoom', (ev) => {
+  st.t = ev.transform; root.attr('transform', ev.transform);
+  renderOverlay();
+});
+svg.call(zoom).on('dblclick.zoom', null);
+svg.on('click', () => { if (!card.hidden && W < 760) closeCard(); });
+function flyTo(ll) {
+  const p = P(ll), k = Math.max(st.t.k, 2.2);
+  const pw = W < 760 ? 0 : document.getElementById('panel').getBoundingClientRect().width + 32;
+  const cx = W < 760 ? W / 2 : pw + (W - pw - 360) / 2, cy = W < 760 ? H * .45 : (H - 100) / 2;
+  svg.transition().duration(900).call(zoom.transform, d3.zoomIdentity.translate(cx - p[0] * k, cy - p[1] * k).scale(k));
+}
+document.getElementById('zin').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1.6);
+document.getElementById('zout').onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1 / 1.6);
+document.getElementById('zreset').onclick = () => svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+
+// ---------- timeline ----------
+const slider = document.getElementById('slider');
+slider.max = NDAYS;
+function buildTimeline() {
+  const yrs = document.getElementById('tlyears'); yrs.innerHTML = '';
+  for (let y = 1940; y <= 1945; y++) {
+    const s = document.createElement('span'); s.style.left = (toDay(y + '-01-01') / NDAYS * 100) + '%'; s.textContent = y; yrs.append(s);
+  }
+  const ev = document.getElementById('tlevts'); ev.innerHTML = '';
+  D.events.forEach(e => { const t = document.createElement('div'); t.className = 'tl-evt'; t.style.left = (e.day / NDAYS * 100) + '%'; t.dataset.d = e.day; ev.append(t); });
+}
+function renderTimeline() {
+  const pct = st.day / NDAYS * 100;
+  document.getElementById('tlfill').style.width = pct + '%';
+  document.getElementById('tlthumb').style.left = pct + '%';
+  slider.value = st.day;
+  slider.setAttribute('aria-valuetext', L().full(toDate(st.day)));
+  document.querySelectorAll('.tl-evt').forEach(t => t.classList.toggle('done', +t.dataset.d <= st.day));
+}
+function setDay(n) {
+  st.day = Math.max(0, Math.min(NDAYS, Math.round(n)));
+  renderSnap(false); renderText(); renderTimeline(); renderArrows(); renderEvents();
+}
+slider.addEventListener('input', () => { stop(); setDay(+slider.value); });
+const hov = document.getElementById('tlhover');
+document.getElementById('tlmain').addEventListener('pointermove', (ev) => {
+  const r = slider.getBoundingClientRect(), m = document.getElementById('tlmain').getBoundingClientRect();
+  const f = Math.max(0, Math.min(1, (ev.clientX - m.left) / m.width));
+  hov.hidden = false; hov.style.left = (f * 100) + '%'; hov.textContent = L().short(toDate(Math.round(f * NDAYS)));
+});
+document.getElementById('tlmain').addEventListener('pointerleave', () => { hov.hidden = true; });
+
+// play
+let raf = 0, last = 0;
+const SPEEDS = [0.5, 1, 2, 4];
+function play() {
+  if (st.day >= NDAYS) setDay(0);
+  st.playing = true; last = 0; setPlayIcon();
+  let acc = st.day;
+  const loop = (ts) => {
+    if (!st.playing) return;
+    const dt = last ? Math.min(0.1, (ts - last) / 1000) : 0; last = ts;
+    acc += dt * 30 * st.speed;
+    if (acc >= NDAYS) { setDay(NDAYS); stop(); return; }
+    if (Math.floor(acc) !== st.day) setDay(Math.floor(acc));
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+}
+function stop() { st.playing = false; cancelAnimationFrame(raf); setPlayIcon(); }
+function setPlayIcon() {
+  document.getElementById('playIco').innerHTML = st.playing ? '<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/>' : '<path d="M4 2.5v11L13.5 8Z" fill="currentColor"/>';
+  document.getElementById('play').setAttribute('aria-label', st.playing ? L().pause : L().play);
+}
+document.getElementById('play').onclick = () => st.playing ? stop() : play();
+document.getElementById('speed').onclick = (ev) => { const i = (SPEEDS.indexOf(st.speed) + 1) % SPEEDS.length; st.speed = SPEEDS[i]; ev.currentTarget.textContent = st.speed + '×'; };
+document.getElementById('prevEv').onclick = () => stepEvent(-1);
+document.getElementById('nextEv').onclick = () => stepEvent(1);
+document.getElementById('ecPrev').onclick = () => stepEvent(-1);
+document.getElementById('ecNext').onclick = () => stepEvent(1);
+document.getElementById('ecClose').onclick = closeCard;
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.target.tagName === 'INPUT' && ev.target.type !== 'range' && ev.target.type !== 'checkbox') return;
+  if (ev.key === ' ' && ev.target.tagName !== 'BUTTON' && !ev.target.closest('.ev')) { ev.preventDefault(); st.playing ? stop() : play(); }
+  else if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+    if (ev.target === slider && !ev.shiftKey) return;
+    ev.preventDefault();
+    const dir = ev.key === 'ArrowRight' ? 1 : -1;
+    if (ev.shiftKey) { stop(); setDay(st.day + dir * 30); } else stepEvent(dir);
+  } else if (ev.key === 'Escape') { closeCard(); document.getElementById('layers').hidden = true; }
+});
+
+// ---------- toolbar ----------
+function setLang(l) { st.lang = l; try { localStorage.setItem('ww2-lang', l); } catch (e) { /* storage unavailable */ } renderStatic(); renderTimeline(); }
+document.getElementById('lzh').onclick = () => setLang('zh');
+document.getElementById('len').onclick = () => setLang('en');
+const lb = document.getElementById('layersBtn'), lp = document.getElementById('layers');
+lb.onclick = (ev) => { ev.stopPropagation(); lp.hidden = !lp.hidden; lb.setAttribute('aria-expanded', !lp.hidden); };
+document.addEventListener('click', (ev) => { if (!lp.hidden && !ev.target.closest('.layers-wrap')) { lp.hidden = true; lb.setAttribute('aria-expanded', 'false'); } });
+const LAYERS = { arrows: 'hide-arrows', events: 'hide-events', fronts: 'hide-fronts', ghost: 'hide-ghost', cities: 'hide-cities', labels: 'hide-labels', rivers: 'hide-rivers' };
+for (const k in LAYERS) document.getElementById('ly-' + k).addEventListener('change', (ev) => { svg.classed(LAYERS[k], !ev.target.checked); });
+document.getElementById('ly-allev').addEventListener('change', renderEvents);
+document.getElementById('panelToggle').onclick = () => {
+  const p = document.getElementById('panel'); p.classList.toggle('open');
+  document.getElementById('panelToggle').setAttribute('aria-expanded', p.classList.contains('open'));
+  document.getElementById('panelToggle').textContent = p.classList.contains('open') ? L().less : L().more;
+};
+
+// ---------- boot ----------
+function boot() {
+  buildTimeline();
+  const h = (location.hash || '').slice(1);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(h)) st.day = Math.max(0, Math.min(NDAYS, toDay(h)));
+  else if (h === 'en' || h === 'zh') st.lang = h;
+  else st.day = toDay('1941-06-22');
+  layout();
+  renderStatic();
+  setDay(st.day);
+  const ev = D.events.find(e => e.id === h);
+  if (ev) openEvent(ev, true);
+}
+let rt = 0;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { svg.call(zoom.transform, d3.zoomIdentity); layout(); }, 150); });
+boot();
+})();
+</script>
