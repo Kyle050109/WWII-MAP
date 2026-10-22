@@ -4,8 +4,6 @@
 
 An interactive map of the Second World War in Europe, from 1 September 1939 to 8 May 1945. Drag the timeline to watch the fronts move, offensives unfold and key events happen. The interface is available in Chinese and English.
 
-Inspired by [jiangshan-map (Chronicles of the Realm)](https://github.com/DeanChensj/jiangshan-map).
-
 ## Features
 
 - **Timeline**: drag it or let it play (0.5× – 4×). The war is divided into 8 phases, from Blitzkrieg to the Fall of the Reich.
